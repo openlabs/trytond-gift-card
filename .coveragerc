@@ -1,0 +1,5 @@
+[run]
+source = trytond.modules.gift_card
+
+[report]
+omit = */tests/*, */setup.py
