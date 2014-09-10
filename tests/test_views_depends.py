@@ -30,6 +30,7 @@ class TestViewsDepends(unittest.TestCase):
         """
         trytond.tests.test_tryton.install_module('gift_card')
 
+    @unittest.skip("Skipping since there are no views yet")
     def test0005views(self):
         '''
         Test views.

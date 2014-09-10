@@ -6,9 +6,11 @@
     :license: BSD, see LICENSE for more details.
 """
 from trytond.pool import Pool
+from .gift_card import GiftCard
 
 
 def register():
     Pool.register(
+        GiftCard,
         module='gift_card', type_='model'
     )
