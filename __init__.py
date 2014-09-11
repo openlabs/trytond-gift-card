@@ -7,10 +7,12 @@
 """
 from trytond.pool import Pool
 from .gift_card import GiftCard
+from sale import SaleLine
 
 
 def register():
     Pool.register(
         GiftCard,
+        SaleLine,
         module='gift_card', type_='model'
     )
