@@ -82,7 +82,9 @@ minor_version = int(minor_version)
 
 requires = []
 
-MODULE2PREFIX = {}
+MODULE2PREFIX = {
+    'sale_payment_gateway': 'openlabs'
+}
 
 MODULE = "gift_card"
 PREFIX = "openlabs"
