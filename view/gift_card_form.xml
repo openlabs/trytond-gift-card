@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<form string="Gift Card">
+    <label name="number"/>
+    <field name="number"/>
+    <label name="currency"/>
+    <field name="currency"/>
+    <label name="amount"/>
+    <field name="amount"/>
+    <label name="sale_line"/>
+    <field name="sale_line"/>
+    <label name="state"/>
+    <field name="state"/>
+</form>
