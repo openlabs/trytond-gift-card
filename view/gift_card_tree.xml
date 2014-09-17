@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<tree string="Gift Cards">
+    <field name="number"/>
+    <field name="currency"/>
+    <field name="amount"/>
+</tree>

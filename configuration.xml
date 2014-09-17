@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<tryton>
+  <data>
+
+        <menuitem name="Gift Card" id="gift_card_main_menu" sequence="10"/>
+
+        <record model="ir.ui.view" id="configuration_form_view">
+            <field name="model">gift_card.configuration</field>
+            <field name="type">form</field>
+            <field name="name">configuration_form</field>
+        </record>
+
+        <record model="ir.action.act_window" id="act_configuration">
+            <field name="name">Configuration</field>
+            <field name="res_model">gift_card.configuration</field>
+            <field name="search_value"></field>
+        </record>
+        <record model="ir.action.act_window.view" id="act_configuration_view1">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="configuration_form_view"/>
+            <field name="act_window" ref="act_configuration"/>
+        </record>
+
+        <menuitem parent="gift_card_main_menu" action="act_configuration" id="configuration_menu"
+          sequence="5"/>
+
+
+    </data>
+</tryton>

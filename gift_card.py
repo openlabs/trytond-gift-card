@@ -7,8 +7,10 @@
 """
 from trytond.model import ModelSQL, ModelView, Workflow, fields
 from trytond.pyson import Eval, If
+from trytond.pool import Pool
+from trytond.transaction import Transaction
 
-__all__ = ['GiftCard']
+__all__ = ['GiftCard', 'GiftCardSaleLine']
 
 
 class GiftCard(Workflow, ModelSQL, ModelView):
@@ -49,9 +51,29 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         ('cancel', 'Canceled'),
     ], 'State', readonly=True, required=True)
 
+    sale_line = fields.One2One(
+        'gift_card.gift_card-sale.line', 'gift_card', 'sale_line', "Sale Line",
+        readonly=True
+    )
+
+    @staticmethod
+    def default_currency():
+        """
+        Set currency of current company as default currency
+        """
+        Company = Pool().get('company.company')
+
+        return Company(Transaction().context.get('company')).currency.id
+
     @staticmethod
     def default_state():
         return 'draft'
+
+    @fields.depends('currency')
+    def on_change_with_currency_digits(self, name=None):
+        if self.currency:
+            return self.currency.digits
+        return 2
 
     @classmethod
     def __setup__(cls):
@@ -77,3 +99,17 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     @classmethod
     def get_origin(cls):
         return [(None, '')]
+
+
+class GiftCardSaleLine(ModelSQL):
+    "Gift Card Sale Line"
+
+    __name__ = 'gift_card.gift_card-sale.line'
+
+    gift_card = fields.Many2One(
+        "gift_card.gift_card", "Gift Card", required=True, select=True
+    )
+
+    sale_line = fields.Many2One(
+        'sale.line', 'Sale Line', required=True, select=True
+    )
