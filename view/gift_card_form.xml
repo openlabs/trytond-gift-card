@@ -9,5 +9,11 @@
     <label name="sale_line"/>
     <field name="sale_line"/>
     <label name="state"/>
-    <field name="state"/>
+    <field name="state" colspan="3"/>
+    <newline/>
+    <group col="6" colspan="4" id="buttons">
+        <button name="draft" string="Draft" icon="tryton-go-previous"/>
+        <button name="active" string="Activate" icon="tryton-go-next"/>
+        <button name="cancel" string="Cancel" icon="tryton-cancel"/>
+    </group>
 </form>

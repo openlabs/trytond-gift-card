@@ -250,6 +250,47 @@ class TestGiftCard(TestBase):
                     sale_line.on_change_with_amount(), Decimal('0')
                 )
 
+    def test0040_gift_card_transition(self):
+        """
+        Check gift card transitions
+        """
+        GiftCard = POOL.get('gift_card.gift_card')
+        Currency = POOL.get('currency.currency')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
+            self.usd = Currency(
+                name='US Dollar', symbol=u'$', code='USD',
+            )
+            self.usd.save()
+
+            gift_card, = GiftCard.create([{
+                'currency': self.usd.id,
+                'amount': Decimal('20'),
+            }])
+
+            self.assertEqual(gift_card.state, 'draft')
+
+            # Gift card can become active in draft state
+            GiftCard.active([gift_card])
+
+            self.assertEqual(gift_card.state, 'active')
+
+            # Gift card can be calcelled from active state
+            GiftCard.cancel([gift_card])
+
+            self.assertEqual(gift_card.state, 'cancel')
+
+            # Gift card can be set back to draft state once cancelled
+            GiftCard.draft([gift_card])
+
+            self.assertEqual(gift_card.state, 'draft')
+
+            # Gift card can be cancelled from draft state also
+            GiftCard.cancel([gift_card])
+
+            self.assertEqual(gift_card.state, 'cancel')
+
 
 def suite():
     """

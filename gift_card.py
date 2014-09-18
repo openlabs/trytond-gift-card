@@ -82,6 +82,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
             ('draft', 'active'),
             ('active', 'cancel'),
             ('draft', 'cancel'),
+            ('cancel', 'draft'),
         ))
         cls._buttons.update({
             'cancel': {
@@ -94,7 +95,37 @@ class GiftCard(Workflow, ModelSQL, ModelView):
                     'tryton-go-previous'
                 ),
             },
+            'active': {
+                'invisible': Eval('state') != 'draft',
+            }
         })
+
+    @classmethod
+    @ModelView.button
+    @Workflow.transition('active')
+    def active(cls, gift_cards):
+        """
+        Set gift cards to active state
+        """
+        pass
+
+    @classmethod
+    @ModelView.button
+    @Workflow.transition('draft')
+    def draft(cls, gift_cards):
+        """
+        Set gift cards back to draft state
+        """
+        pass
+
+    @classmethod
+    @ModelView.button
+    @Workflow.transition('cancel')
+    def cancel(cls, gift_cards):
+        """
+        Cancel gift cards
+        """
+        pass
 
     @classmethod
     def get_origin(cls):
