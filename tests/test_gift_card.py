@@ -272,7 +272,7 @@ class TestGiftCard(TestBase):
             self.assertEqual(gift_card.state, 'draft')
 
             # Gift card can become active in draft state
-            GiftCard.active([gift_card])
+            GiftCard.activate([gift_card])
 
             self.assertEqual(gift_card.state, 'active')
 
@@ -312,7 +312,7 @@ class TestGiftCard(TestBase):
 
             self.assertFalse(gift_card.number)
 
-            GiftCard.active([gift_card])
+            GiftCard.activate([gift_card])
 
             self.assertTrue(gift_card.number)
 

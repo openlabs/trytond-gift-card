@@ -96,7 +96,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
                     'tryton-go-previous'
                 ),
             },
-            'active': {
+            'activate': {
                 'invisible': Eval('state') != 'draft',
             }
         })
@@ -104,7 +104,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     @classmethod
     @ModelView.button
     @Workflow.transition('active')
-    def active(cls, gift_cards):
+    def activate(cls, gift_cards):
         """
         Set gift cards to active state
         """
