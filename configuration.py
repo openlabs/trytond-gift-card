@@ -20,3 +20,11 @@ class Configuration(ModelSingleton, ModelSQL, ModelView):
             domain=[('kind', '=', 'revenue')]
         )
     )
+
+    # This field defines sequnce for the gift card number
+    number_sequence = fields.Property(
+        fields.Many2One(
+            'ir.sequence', 'Number Sequence', required=True,
+            domain=[('code', '=', 'gift_card.gift_card')],
+        )
+    )

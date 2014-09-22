@@ -291,6 +291,31 @@ class TestGiftCard(TestBase):
 
             self.assertEqual(gift_card.state, 'cancel')
 
+    def test0050_gift_card_sequence(self):
+        """
+        Check sequence is created on activating gift card
+        """
+        GiftCard = POOL.get('gift_card.gift_card')
+        Currency = POOL.get('currency.currency')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
+            self.usd = Currency(
+                name='US Dollar', symbol=u'$', code='USD',
+            )
+            self.usd.save()
+
+            gift_card, = GiftCard.create([{
+                'currency': self.usd.id,
+                'amount': Decimal('20'),
+            }])
+
+            self.assertFalse(gift_card.number)
+
+            GiftCard.active([gift_card])
+
+            self.assertTrue(gift_card.number)
+
 
 def suite():
     """
