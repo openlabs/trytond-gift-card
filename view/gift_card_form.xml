@@ -1,17 +1,31 @@
 <?xml version="1.0"?>
 <form string="Gift Card">
     <label name="number"/>
-    <field name="number"/>
+    <field name="number" colspan="3"/>
     <label name="currency"/>
     <field name="currency"/>
-    <label name="amount"/>
-    <field name="amount"/>
     <label name="sale_line"/>
     <field name="sale_line"/>
-    <label name="state"/>
-    <field name="state" colspan="3"/>
+   
     <newline/>
-    <group col="6" colspan="4" id="buttons">
+    <notebook>
+       <page string="Payment Transactions" id="transactions">
+           <field name="payment_transactions"/>
+       </page>
+       <page string="Amounts" id="amounts">
+            <label name="amount"/>
+            <field name="amount"/>
+            <label name="amount_authorized"/>
+            <field name="amount_authorized"/>
+            <label name="amount_captured"/>
+            <field name="amount_captured"/>
+            <label name="amount_available"/>
+            <field name="amount_available"/>
+        </page>
+    </notebook>
+    <label name="state"/>
+    <field name="state"/>
+    <group col="3" colspan="2" id="buttons">
         <button name="draft" string="Draft" icon="tryton-go-previous"/>
         <button name="activate" string="Activate" icon="tryton-go-next"/>
         <button name="cancel" string="Cancel" icon="tryton-cancel"/>

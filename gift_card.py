@@ -45,14 +45,39 @@ class GiftCard(Workflow, ModelSQL, ModelView):
             'readonly': Eval('state') != 'draft'
         }, depends=['state', 'currency_digits'], required=True
     )
+
+    amount_authorized = fields.Function(
+        fields.Numeric(
+            "Amount Authorized", digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']
+        ), 'get_amount'
+    )
+    amount_captured = fields.Function(
+        fields.Numeric(
+            "Amount Captured", digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']
+        ), 'get_amount'
+    )
+
+    amount_available = fields.Function(
+        fields.Numeric(
+            "Amount Available", digits=(16, Eval('currency_digits', 2)),
+            depends=['currency_digits']
+        ), 'get_amount'
+    )
     state = fields.Selection([
         ('draft', 'Draft'),
         ('active', 'Active'),
-        ('cancel', 'Canceled'),
+        ('canceled', 'Canceled'),
+        ('used', 'Used'),
     ], 'State', readonly=True, required=True)
 
     sale_line = fields.One2One(
         'gift_card.gift_card-sale.line', 'gift_card', 'sale_line', "Sale Line",
+        readonly=True
+    )
+    payment_transactions = fields.One2Many(
+        "payment_gateway.transaction", "gift_card", "Payment Transactions",
         readonly=True
     )
 
@@ -65,6 +90,27 @@ class GiftCard(Workflow, ModelSQL, ModelView):
 
         return Transaction().context.get('company') and \
             Company(Transaction().context.get('company')).currency.id or None
+
+    def get_amount(self, name):
+        """
+        Returns authorzied, captured and available amount for the gift card
+        """
+        PaymentTransaction = Pool().get('payment_gateway.transaction')
+
+        if name == 'amount_authorized':
+            return sum([t.amount for t in PaymentTransaction.search([
+                ('state', '=', 'authorized'),
+                ('gift_card', '=', self.id)
+            ])])
+
+        if name == 'amount_captured':
+            return sum([t.amount for t in PaymentTransaction.search([
+                ('state', '=', 'posted'),
+                ('gift_card', '=', self.id)
+            ])])
+
+        if name == 'amount_available':
+            return self.amount - self.amount_authorized - self.amount_captured
 
     @staticmethod
     def default_state():
@@ -81,16 +127,16 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         super(GiftCard, cls).__setup__()
         cls._transitions |= set((
             ('draft', 'active'),
-            ('active', 'cancel'),
-            ('draft', 'cancel'),
-            ('cancel', 'draft'),
+            ('active', 'canceled'),
+            ('draft', 'canceled'),
+            ('canceled', 'draft'),
         ))
         cls._buttons.update({
             'cancel': {
                 'invisible': ~Eval('state').in_(['draft', 'active']),
             },
             'draft': {
-                'invisible': ~Eval('state').in_(['cancel']),
+                'invisible': ~Eval('state').in_(['canceled']),
                 'icon': If(
                     Eval('state') == 'cancel', 'tryton-clear',
                     'tryton-go-previous'
@@ -122,7 +168,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
 
     @classmethod
     @ModelView.button
-    @Workflow.transition('cancel')
+    @Workflow.transition('canceled')
     def cancel(cls, gift_cards):
         """
         Cancel gift cards

@@ -10,6 +10,7 @@ from .gift_card import GiftCard, GiftCardSaleLine
 from sale import SaleLine, Sale
 from configuration import Configuration
 from invoice import Invoice, InvoiceLine
+from gateway import PaymentGateway, PaymentTransaction
 
 
 def register():
@@ -21,5 +22,7 @@ def register():
         Sale,
         Invoice,
         InvoiceLine,
+        PaymentGateway,
+        PaymentTransaction,
         module='gift_card', type_='model'
     )
