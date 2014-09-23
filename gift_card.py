@@ -63,7 +63,8 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         """
         Company = Pool().get('company.company')
 
-        return Company(Transaction().context.get('company')).currency.id
+        return Transaction().context.get('company') and \
+            Company(Transaction().context.get('company')).currency.id or None
 
     @staticmethod
     def default_state():
@@ -95,7 +96,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
                     'tryton-go-previous'
                 ),
             },
-            'active': {
+            'activate': {
                 'invisible': Eval('state') != 'draft',
             }
         })
@@ -103,11 +104,12 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     @classmethod
     @ModelView.button
     @Workflow.transition('active')
-    def active(cls, gift_cards):
+    def activate(cls, gift_cards):
         """
         Set gift cards to active state
         """
-        pass
+        for card in gift_cards:
+            card.generate_sequence()
 
     @classmethod
     @ModelView.button
@@ -130,6 +132,18 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     @classmethod
     def get_origin(cls):
         return [(None, '')]
+
+    def generate_sequence(self):
+        """
+        Fills the code field with number sequence
+
+        """
+        Sequence = Pool().get('ir.sequence')
+        Configuration = Pool().get('gift_card.configuration')
+
+        if not self.number:
+            self.number = Sequence.get_id(Configuration(1).number_sequence.id)
+            self.save()
 
 
 class GiftCardSaleLine(ModelSQL):

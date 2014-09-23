@@ -2,4 +2,6 @@
 <form string="Configuration">
     <label name="liability_account"/>
     <field name="liability_account"/>
+    <label name="number_sequence"/>
+    <field name="number_sequence"/>
 </form>
