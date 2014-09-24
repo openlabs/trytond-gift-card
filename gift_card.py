@@ -5,12 +5,15 @@
     :copyright: (c) 2014 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
+from num2words import num2words
+
 from trytond.model import ModelSQL, ModelView, Workflow, fields
 from trytond.pyson import Eval, If
 from trytond.pool import Pool
 from trytond.transaction import Transaction
+from trytond.report import Report
 
-__all__ = ['GiftCard', 'GiftCardSaleLine']
+__all__ = ['GiftCard', 'GiftCardSaleLine', 'GiftCardReport']
 
 
 class GiftCard(Workflow, ModelSQL, ModelView):
@@ -204,3 +207,20 @@ class GiftCardSaleLine(ModelSQL):
     sale_line = fields.Many2One(
         'sale.line', 'Sale Line', required=True, select=True
     )
+
+
+class GiftCardReport(Report):
+    __name__ = 'gift_card.gift_card'
+
+    @classmethod
+    def parse(cls, report, records, data, localcontext):
+        """
+        Update localcontext to add num2words
+        """
+        localcontext.update({
+            'num2words': lambda *args, **kargs: num2words(
+                *args, **kargs)
+        })
+        return super(GiftCardReport, cls).parse(
+            report, records, data, localcontext
+        )

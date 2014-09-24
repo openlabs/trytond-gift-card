@@ -716,6 +716,30 @@ class TestGiftCard(TestBase):
             self.assertEqual(active_gift_card.amount_captured, 30)
             self.assertEqual(active_gift_card.amount_available, 80)
 
+    def test0080_test_gift_card_report(self):
+        """
+        Test Gift Card report
+        """
+        GiftCard = POOL.get('gift_card.gift_card')
+        GiftCardReport = POOL.get('gift_card.gift_card', type='report')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                gift_card, = GiftCard.create([{
+                    'amount': Decimal('200'),
+                    'number': '45671338',
+                    'state': 'active',
+                }])
+
+                val = GiftCardReport.execute([gift_card.id], {})
+
+                self.assert_(val)
+                # Assert report name
+                self.assertEqual(val[3], 'Gift Card')
+
 
 def suite():
     """
