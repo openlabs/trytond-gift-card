@@ -112,10 +112,12 @@ class Sale:
                 if line.type == 'gift_card':
 
                     # Create gift card for sale line
-                    GiftCard.create([{
+                    gift_card, = GiftCard.create([{
                         'amount': line.amount,
                         'sale_line': line.id,
                     }])
+
+                    GiftCard.activate([gift_card])
 
         return rv
 

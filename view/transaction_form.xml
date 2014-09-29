@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<data>
+    <xpath expr="//field[@name='currency']" position="after">
+        <label name="gift_card"/>
+        <field name="gift_card"/>
+    </xpath>
+</data>
+

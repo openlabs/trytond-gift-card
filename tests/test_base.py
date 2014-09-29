@@ -13,7 +13,9 @@ DIR = os.path.abspath(os.path.normpath(os.path.join(
 if os.path.isdir(DIR):
     sys.path.insert(0, os.path.dirname(DIR))
 import unittest
+from datetime import date, datetime
 from decimal import Decimal
+from dateutil.relativedelta import relativedelta
 
 from trytond.tests.test_tryton import POOL, USER
 import trytond.tests.test_tryton
@@ -38,6 +40,46 @@ class TestBase(unittest.TestCase):
         self.User = POOL.get('res.user')
         self.Country = POOL.get('country.country')
         self.SubDivision = POOL.get('country.subdivision')
+        self.Sequence = POOL.get('ir.sequence')
+        self.Account = POOL.get('account.account')
+
+    def _create_fiscal_year(self, date_=None, company=None):
+        """
+        Creates a fiscal year and requried sequences
+        """
+        FiscalYear = POOL.get('account.fiscalyear')
+        Sequence = POOL.get('ir.sequence')
+        SequenceStrict = POOL.get('ir.sequence.strict')
+        Company = POOL.get('company.company')
+
+        if date_ is None:
+            date_ = datetime.utcnow().date()
+
+        if company is None:
+            company, = Company.search([], limit=1)
+
+        invoice_sequence, = SequenceStrict.create([{
+            'name': '%s' % date.year,
+            'code': 'account.invoice',
+            'company': company,
+        }])
+        fiscal_year, = FiscalYear.create([{
+            'name': '%s' % date_.year,
+            'start_date': date_ + relativedelta(month=1, day=1),
+            'end_date': date_ + relativedelta(month=12, day=31),
+            'company': company,
+            'post_move_sequence': Sequence.create([{
+                'name': '%s' % date_.year,
+                'code': 'account.move',
+                'company': company,
+            }])[0],
+            'out_invoice_sequence': invoice_sequence,
+            'in_invoice_sequence': invoice_sequence,
+            'out_credit_note_sequence': invoice_sequence,
+            'in_credit_note_sequence': invoice_sequence,
+        }])
+        FiscalYear.create_period([fiscal_year])
+        return fiscal_year
 
     def _create_coa_minimal(self, company):
         """Create a minimal chart of accounts
@@ -137,6 +179,7 @@ class TestBase(unittest.TestCase):
         self.account_revenue = self._get_account_by_kind('revenue')
         self.account_expense = self._get_account_by_kind('expense')
         self._create_payment_term()
+        self._create_fiscal_year()
 
         self.party1, = self.Party.create([{
             'name': 'Test party',
@@ -161,3 +204,43 @@ class TestBase(unittest.TestCase):
         self.product1, = Product.create([{
             'template': self.template1.id,
         }])
+
+    def create_payment_gateway(self, provider='gift_card'):
+        """
+        Create payment gateway
+        """
+        PaymentGateway = POOL.get('payment_gateway.gateway')
+        Journal = POOL.get('account.journal')
+
+        today = date.today()
+
+        sequence, = self.Sequence.create([{
+            'name': 'PM-%s' % today.year,
+            'code': 'account.journal',
+            'company': self.company.id
+        }])
+
+        self.account_cash, = self.Account.search([
+            ('kind', '=', 'other'),
+            ('name', '=', 'Main Cash'),
+            ('company', '=', self.company.id)
+        ])
+
+        self.cash_journal, = Journal.create([{
+            'name': 'Cash Journal',
+            'code': 'cash',
+            'type': 'cash',
+            'credit_account': self.account_cash.id,
+            'debit_account': self.account_cash.id,
+            'sequence': sequence.id,
+        }])
+
+        if provider == 'gift_card':
+            gateway = PaymentGateway(
+                name='Gift Card',
+                journal=self.cash_journal,
+                provider='self',
+                method='gift_card',
+            )
+            gateway.save()
+            return gateway
