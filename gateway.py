@@ -21,11 +21,11 @@ class PaymentGateway:
     __name__ = 'payment_gateway.gateway'
 
     def get_methods(self):
-        if self.provider == 'self':
-            return [
-                ('gift_card', 'Gift Card'),
-            ]
-        return super(PaymentGateway, self).get_methods()
+        rv = super(PaymentGateway, self).get_methods()
+        gift_card = ('gift_card', 'Gift Card')
+        if self.provider == 'self' and gift_card not in rv:
+            rv.append(gift_card)
+        return rv
 
 
 class PaymentTransaction:
@@ -51,24 +51,22 @@ class PaymentTransaction:
                 'Card %s is found to have insufficient amount'
         })
 
-        cls._buttons['authorize'] = {
-            'invisible': ~(
-                (Eval('state') == 'draft') & (
-                    (Eval('payment_profile', True) &
-                    (Eval('method') == 'credit_card')) |
-                    (Eval('method') == 'gift_card')
-                )
-            )
-        }
-        cls._buttons['capture'] = {
-            'invisible': ~(
-                (Eval('state') == 'draft') & (
-                    (Eval('payment_profile', True) &
-                    (Eval('method') == 'credit_card')) |
-                    (Eval('method') == 'gift_card')
-                )
-            ),
-        }
+        cls._buttons['authorize']['invisible'] = \
+            cls._buttons['authorize']['invisible'] & ~(
+                (Eval('state') == 'draft') &
+                (Eval('method') == 'gift_card')
+        )
+        cls._buttons['capture']['invisible'] = \
+            cls._buttons['capture']['invisible'] & ~(
+                (Eval('state') == 'draft') &
+                (Eval('method') == 'gift_card')
+        )
+
+        cls._buttons['settle']['invisible'] = \
+            cls._buttons['settle']['invisible'] & ~(
+                (Eval('state') == 'authorized') &
+                (Eval('method') == 'gift_card')
+        )
 
     def authorize_gift_card(self):
         """
@@ -86,6 +84,21 @@ class PaymentTransaction:
         Capture using gift card for the specific transaction.
         """
         if self.gift_card.amount_available >= self.amount:
+            self.state = 'completed'
+            self.save()
+            self.safe_post()
+
+        else:
+            self.raise_user_error("insufficient_amount", self.gift_card.number)
+
+    def settle_gift_card(self):
+        """
+        Settle using gift card for the specific transaction.
+        """
+
+        amount_available = \
+            self.gift_card.amount - self.gift_card.amount_captured
+        if amount_available >= self.amount:
             self.state = 'completed'
             self.save()
             self.safe_post()
