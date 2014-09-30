@@ -79,10 +79,20 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         'gift_card.gift_card-sale.line', 'gift_card', 'sale_line', "Sale Line",
         readonly=True
     )
+
+    sale = fields.Function(
+        fields.Many2One('sale.sale', "Sale"), 'get_sale'
+    )
     payment_transactions = fields.One2Many(
         "payment_gateway.transaction", "gift_card", "Payment Transactions",
         readonly=True
     )
+
+    def get_sale(self, name):
+        """
+        Return sale for gift card using sale line associated with it
+        """
+        return self.sale_line and self.sale_line.sale.id or None
 
     @staticmethod
     def default_currency():

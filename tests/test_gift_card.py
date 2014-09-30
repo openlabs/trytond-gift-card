@@ -142,6 +142,7 @@ class TestGiftCard(TestBase):
 
                 self.assertEqual(gift_card.amount, 500)
                 self.assertEqual(gift_card.state, 'active')
+                self.assertEqual(gift_card.sale, sale)
 
                 self.assertEqual(invoice.untaxed_amount, 900)
                 self.assertEqual(invoice.total_amount, 900)

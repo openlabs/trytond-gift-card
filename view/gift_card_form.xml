@@ -6,8 +6,8 @@
     <field name="amount"/>
     <label name="currency"/>
     <field name="currency"/>
-    <label name="sale_line"/>
-    <field name="sale_line"/>
+    <label name="sale"/>
+    <field name="sale"/>
     <newline/>
     <notebook>
        <page string="Payment Transactions" id="transactions">
