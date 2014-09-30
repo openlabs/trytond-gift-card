@@ -741,6 +741,36 @@ class TestGiftCard(TestBase):
                 # Assert report name
                 self.assertEqual(val[3], 'Gift Card')
 
+    def test0090_test_gift_card_deletion(self):
+        """
+        Test that Gift Card should not be deleted in active state
+        """
+        GiftCard = POOL.get('gift_card.gift_card')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                gift_card, = GiftCard.create([{
+                    'amount': Decimal('200'),
+                    'number': '45671338',
+                    'state': 'active',
+                }])
+
+                with self.assertRaises(Exception):
+                    GiftCard.delete([gift_card])
+
+                # Try to delete gift card in some other state and it will
+                # be deleted
+                gift_card, = GiftCard.create([{
+                    'amount': Decimal('200'),
+                    'number': '45671338',
+                    'state': 'draft',
+                }])
+
+                GiftCard.delete([gift_card])
+
 
 def suite():
     """

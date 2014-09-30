@@ -138,6 +138,11 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(GiftCard, cls).__setup__()
+
+        cls._error_messages.update({
+            'deletion_not_allowed':
+                "Gift cards can not be deleted in active state"
+        })
         cls._transitions |= set((
             ('draft', 'active'),
             ('active', 'canceled'),
@@ -203,6 +208,18 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         if not self.number:
             self.number = Sequence.get_id(Configuration(1).number_sequence.id)
             self.save()
+
+    @classmethod
+    def delete(cls, gift_cards):
+        """
+        It should not be possible to delete gift cards in active state
+        """
+
+        for gift_card in gift_cards:
+            if gift_card.state == 'active':
+                cls.raise_user_error("deletion_not_allowed")
+
+        return super(GiftCard, cls).delete(gift_cards)
 
 
 class GiftCardSaleLine(ModelSQL):
