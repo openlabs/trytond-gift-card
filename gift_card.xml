@@ -33,6 +33,18 @@
         <menuitem parent="gift_card_main_menu" action="act_gift_card" id="gift_card_menu"
           sequence="10"/>
 
+        <record model="ir.action.report" id="report_gift_card">
+            <field name="name">Gift Card</field>
+            <field name="model">gift_card.gift_card</field>
+            <field name="report_name">gift_card.gift_card</field>
+            <field name="report">gift_card/gift_card.odt</field>
+        </record>
+
+        <record model="ir.action.keyword" id="print_keyword">
+            <field name="keyword">form_print</field>
+            <field name="model">gift_card.gift_card,-1</field>
+            <field name="action" ref="report_gift_card"/>
+        </record>
 
     </data>
 </tryton>

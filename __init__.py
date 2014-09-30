@@ -6,7 +6,7 @@
     :license: BSD, see LICENSE for more details.
 """
 from trytond.pool import Pool
-from .gift_card import GiftCard, GiftCardSaleLine
+from .gift_card import GiftCard, GiftCardSaleLine, GiftCardReport
 from sale import SaleLine, Sale
 from configuration import Configuration
 from invoice import Invoice, InvoiceLine
@@ -25,4 +25,8 @@ def register():
         PaymentGateway,
         PaymentTransaction,
         module='gift_card', type_='model'
+    )
+    Pool.register(
+        GiftCardReport,
+        module='gift_card', type_='report'
     )
