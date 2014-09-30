@@ -22,6 +22,9 @@ class SaleLine:
     gift_card = fields.One2One(
         'gift_card.gift_card-sale.line', "sale_line", "gift_card", "Gift Card"
     )
+    message = fields.Text(
+        "Message", states={'invisible': Eval('type') != 'gift_card'}
+    )
 
     @classmethod
     def __setup__(cls):
@@ -113,6 +116,7 @@ class Sale:
                     gift_card, = GiftCard.create([{
                         'amount': line.amount,
                         'sale_line': line.id,
+                        'message': line.message
                     }])
 
                     GiftCard.activate([gift_card])

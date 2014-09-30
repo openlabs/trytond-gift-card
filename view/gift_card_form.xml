@@ -21,6 +21,9 @@
             <label name="amount_available"/>
             <field name="amount_available"/>
         </page>
+        <page name="message">
+            <field name="message"/>
+        </page>
     </notebook>
     <label name="state"/>
     <field name="state"/>
