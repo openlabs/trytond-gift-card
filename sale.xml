@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<tryton>
+    <data>
+
+        <record model="ir.action.act_window" id="act_gift_cards">
+            <field name="name">Gift Cards</field>
+            <field name="res_model">gift_card.gift_card</field>
+            <field name="domain">[('sale_line.sale', 'in', Eval('active_ids'))]</field>
+        </record>
+        <record model="ir.action.keyword" id="act_open_gift_card_keyword1">
+            <field name="keyword">form_relate</field>
+            <field name="model">sale.sale,-1</field>
+            <field name="action" ref="act_gift_cards"/>
+        </record>
+
+    </data>
+</tryton>

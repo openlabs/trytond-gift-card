@@ -46,5 +46,16 @@
             <field name="action" ref="report_gift_card"/>
         </record>
 
+        <record model="ir.action.act_window" id="act_sales">
+            <field name="name">Sales</field>
+            <field name="res_model">sale.sale</field>
+            <field name="domain">[('lines.gift_card', 'in', Eval('active_ids'))]</field>
+        </record>
+        <record model="ir.action.keyword" id="act_open_sale_keyword1">
+            <field name="keyword">form_relate</field>
+            <field name="model">gift_card.gift_card,-1</field>
+            <field name="action" ref="act_sales"/>
+        </record>
+
     </data>
 </tryton>
