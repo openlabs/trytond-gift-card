@@ -5,7 +5,6 @@
     :copyright: (c) 2014 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
-import copy
 from decimal import Decimal
 
 from trytond.pool import PoolMeta
@@ -41,19 +40,19 @@ class InvoiceLine:
     def __setup__(cls):
         super(InvoiceLine, cls).__setup__()
 
-        cls.type = copy.copy(cls.type)
-        cls.type.selection = copy.copy(cls.type.selection)
-        cls.type.selection.append(('gift_card', 'Gift Card'))
+        if ('gift_card', 'Gift Card') not in cls.type.selection:
 
-        cls.unit_price.states.update({
-            'invisible': ~Eval('type').in_(['line', 'gift_card'])
-        })
-        cls.quantity.states.update({
-            'invisible': ~Eval('type').in_(['line', 'gift_card'])
-        })
-        cls.amount.states.update({
-            'invisible': ~Eval('type').in_(['line', 'gift_card'])
-        })
+            cls.type.selection.append(('gift_card', 'Gift Card'))
+
+            cls.unit_price.states.update({
+                'invisible': ~Eval('type').in_(['line', 'gift_card'])
+            })
+            cls.quantity.states.update({
+                'invisible': ~Eval('type').in_(['line', 'gift_card'])
+            })
+            cls.amount.states.update({
+                'invisible': ~Eval('type').in_(['line', 'gift_card'])
+            })
 
     def get_amount(self, name):
         """
