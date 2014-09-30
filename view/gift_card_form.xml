@@ -1,20 +1,19 @@
 <?xml version="1.0"?>
 <form string="Gift Card">
     <label name="number"/>
-    <field name="number" colspan="3"/>
+    <field name="number"/>
+    <label name="amount"/>
+    <field name="amount"/>
     <label name="currency"/>
     <field name="currency"/>
     <label name="sale_line"/>
     <field name="sale_line"/>
-   
     <newline/>
     <notebook>
        <page string="Payment Transactions" id="transactions">
            <field name="payment_transactions"/>
        </page>
        <page string="Amounts" id="amounts">
-            <label name="amount"/>
-            <field name="amount"/>
             <label name="amount_authorized"/>
             <field name="amount_authorized"/>
             <label name="amount_captured"/>
