@@ -7,6 +7,7 @@
 """
 from decimal import Decimal
 
+from trytond.model import fields
 from trytond.pool import PoolMeta
 from trytond.pyson import Eval
 
@@ -36,6 +37,10 @@ class InvoiceLine:
     'Invoice Line'
     __name__ = 'account.invoice.line'
 
+    message = fields.Text(
+        "Message", states={'invisible': Eval('type') != 'gift_card'}
+    )
+
     @classmethod
     def __setup__(cls):
         super(InvoiceLine, cls).__setup__()
@@ -50,15 +55,22 @@ class InvoiceLine:
         cls.unit_price.states['invisible'] = \
             cls.unit_price.states['invisible'] & ~(Eval('type') == 'gift_card')
 
-        cls.quantity.states['invisible'] = \
-            cls.quantity.states['invisible'] & ~(Eval('type') == 'gift_card')
+        cls.unit_price.states['required'] = \
+            cls.unit_price.states['required'] | (Eval('type') == 'gift_card')
 
     def get_amount(self, name):
         """
         Calulate amount for invoice line of gift card type
         """
-        rv = super(InvoiceLine, self).get_amount(name)
-        if self.type == 'gift_card':
-            return self.currency.round(
-                Decimal(str(self.quantity)) * self.unit_price)
-        return rv
+        if self.type != 'gift_card':
+            return super(InvoiceLine, self).get_amount(name)
+        return self.unit_price
+
+    @fields.depends('type', 'quantity', 'unit_price',
+        '_parent_invoice.currency', 'currency')
+    def on_change_with_amount(self):
+        if self.type != 'gift_card':
+            return super(InvoiceLine, self).on_change_with_amount()
+
+        # For gift card the price is the gift card value
+        return self.unit_price or Decimal('0.0')

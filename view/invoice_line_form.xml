@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<data>
+    <xpath expr="//notebook" position="inside">
+        <page name="message">
+            <field name="message"/>
+        </page>
+    </xpath>
+</data>

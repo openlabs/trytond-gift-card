@@ -78,6 +78,7 @@ class SaleLine:
         invoice_line.account = GiftCardConfiguration(1).liability_account
         invoice_line.unit_price = self.unit_price
         invoice_line.quantity = 1   # FIXME
+        invoice_line.message = self.message
 
         if not invoice_line.account:
             self.raise_user_error(
