@@ -87,6 +87,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         "payment_gateway.transaction", "gift_card", "Payment Transactions",
         readonly=True
     )
+    message = fields.Text("Message")
 
     def get_sale(self, name):
         """
