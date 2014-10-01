@@ -30,19 +30,14 @@ class SaleLine:
         if ('gift_card', 'Gift Card') not in cls.type.selection:
             cls.type.selection.append(('gift_card', 'Gift Card'))
 
-            cls.amount.states['invisible'] = ~Eval('type').in_(
-                ['line', 'subtotal', 'gift_card']
-            )
+        cls.amount.states['invisible'] = \
+            cls.amount.states['invisible'] & ~(Eval('type') == 'gift_card')
 
-            cls.unit_price.states.update({
-                'invisible': ~Eval('type').in_(['line', 'gift_card'])
-            })
-            cls.quantity.states.update({
-                'invisible': ~Eval('type').in_(['line', 'gift_card'])
-            })
-            cls.amount.states.update({
-                'invisible': ~Eval('type').in_(['line', 'gift_card'])
-            })
+        cls.unit_price.states['invisible'] = \
+            cls.unit_price.states['invisible'] & ~(Eval('type') == 'gift_card')
+
+        cls.quantity.states['invisible'] = \
+            cls.quantity.states['invisible'] & ~(Eval('type') == 'gift_card')
 
     def get_amount(self, name):
         """
