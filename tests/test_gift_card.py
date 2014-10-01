@@ -122,13 +122,23 @@ class TestGiftCard(TestBase):
                 self.assertEqual(sale.total_amount, 900)
 
                 Sale.quote([sale])
+
+                self.assertEqual(sale.untaxed_amount, 900)
+                self.assertEqual(sale.total_amount, 900)
+
                 Sale.confirm([sale])
+
+                self.assertEqual(sale.untaxed_amount, 900)
+                self.assertEqual(sale.total_amount, 900)
 
                 self.assertFalse(GiftCard.search([]))
 
                 self.assertFalse(Invoice.search([]))
 
                 Sale.process([sale])
+
+                self.assertEqual(sale.untaxed_amount, 900)
+                self.assertEqual(sale.total_amount, 900)
 
                 self.assertTrue(GiftCard.search([]))
 
@@ -146,6 +156,48 @@ class TestGiftCard(TestBase):
 
                 self.assertEqual(invoice.untaxed_amount, 900)
                 self.assertEqual(invoice.total_amount, 900)
+
+    def test0025_create_gift_card_for_line(self):
+        """
+        Check if gift card is not create if sale line is of type line
+        """
+        Sale = POOL.get('sale.sale')
+        SaleLine = POOL.get('sale.line')
+        GiftCard = POOL.get('gift_card.gift_card')
+        Configuration = POOL.get('gift_card.configuration')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
+            self.setup_defaults()
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                Configuration.create([{
+                    'liability_account': self._get_account_by_kind('revenue').id
+                }])
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                }])
+                sale_line, = SaleLine.create([{
+                    'sale': sale.id,
+                    'type': 'line',
+                    'quantity': 2,
+                    'unit': self.uom,
+                    'unit_price': 200,
+                    'description': 'Test description1',
+                    'product': self.product1.id,
+                }])
+
+                self.assertFalse(GiftCard.search([]))
+
+                sale_line.create_gift_card()
+
+                # No gift card is created
+                self.assertFalse(GiftCard.search([]))
 
     def test0025_gift_card_on_processing_sale_without_liability_account(self):
         """
@@ -229,17 +281,7 @@ class TestGiftCard(TestBase):
                 )
 
                 self.assertEqual(
-                    sale_line.on_change_with_amount(), Decimal('67.70')
-                )
-
-                # 2. Sale Line without sale and type as "gift_card"
-                sale_line = SaleLine(
-                    quantity=3, unit_price=Decimal('22.56789'),
-                    type='gift_card', sale=None
-                )
-
-                self.assertEqual(
-                    sale_line.on_change_with_amount(), Decimal('67.70367')
+                    sale_line.on_change_with_amount(), Decimal('22.56789')
                 )
 
                 # 3. Sale Line with type other than "gift_card"
