@@ -259,32 +259,24 @@ class TestGiftCard(TestBase):
         Check if amount is changed with quantity and unit price
         """
         SaleLine = POOL.get('sale.line')
-        Sale = POOL.get('sale.sale')
+        InvoiceLine = POOL.get('account.invoice.line')
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             self.setup_defaults()
 
             with Transaction().set_context({'company': self.company.id}):
 
-                # 1. Sale with currency and sale line type as "gift_card"
-                sale, = Sale.create([{
-                    'reference': 'Sale1',
-                    'sale_date': date.today(),
-                    'invoice_address': self.party1.addresses[0].id,
-                    'shipment_address': self.party1.addresses[0].id,
-                    'party': self.party1.id
-                }])
-
+                # Sale line as gift card
                 sale_line = SaleLine(
-                    quantity=3, unit_price=Decimal('22.56789'),
-                    type='gift_card', sale=sale
+                    unit_price=Decimal('22.56789'),
+                    type='gift_card', sale=None
                 )
 
                 self.assertEqual(
                     sale_line.on_change_with_amount(), Decimal('22.56789')
                 )
 
-                # 3. Sale Line with type other than "gift_card"
+                # Sale Line with type other than "gift_card"
                 sale_line = SaleLine(
                     quantity=3, unit_price=Decimal('22.56789'),
                     type='subtotal', sale=None
@@ -292,6 +284,26 @@ class TestGiftCard(TestBase):
 
                 self.assertEqual(
                     sale_line.on_change_with_amount(), Decimal('0')
+                )
+
+                # Invoice line as gift card
+                invoice_line = InvoiceLine(
+                    unit_price=Decimal('22.56789'),
+                    type='gift_card', sale=None
+                )
+
+                self.assertEqual(
+                    invoice_line.on_change_with_amount(), Decimal('22.56789')
+                )
+
+                # Invoice Line with type other than "gift_card"
+                invoice_line = InvoiceLine(
+                    unit_price=Decimal('22.56789'),
+                    type='subtotal', sale=None
+                )
+
+                self.assertEqual(
+                    invoice_line.on_change_with_amount(), Decimal('0')
                 )
 
     def test0040_gift_card_transition(self):
