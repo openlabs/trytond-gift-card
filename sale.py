@@ -86,7 +86,7 @@ class SaleLine:
             if currency:
                 return currency.round(amount)
             return amount
-        return Decimal('0.0')
+        return super(SaleLine, self).on_change_with_amount()
 
 
 class Sale:
