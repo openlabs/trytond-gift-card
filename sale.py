@@ -5,11 +5,9 @@
     :copyright: (c) 2014 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
-from decimal import Decimal
-
 from trytond.model import fields, ModelView
 from trytond.pool import PoolMeta, Pool
-from trytond.pyson import Eval
+from trytond.pyson import Eval, Bool
 from trytond.transaction import Transaction
 
 __all__ = ['SaleLine', 'Sale']
@@ -20,36 +18,32 @@ class SaleLine:
     "SaleLine"
     __name__ = 'sale.line'
 
-    gift_card = fields.One2One(
-        'gift_card.gift_card-sale.line', "sale_line", "gift_card", "Gift Card"
+    is_gift_card = fields.Boolean('Gift Card')
+    gift_cards = fields.One2Many(
+        'gift_card.gift_card', "sale_line", "Gift Cards", readonly=True
     )
     message = fields.Text(
-        "Message", states={'invisible': Eval('type') != 'gift_card'}
+        "Message", states={'invisible': ~Bool(Eval('is_gift_card'))}
     )
 
     @classmethod
     def __setup__(cls):
         super(SaleLine, cls).__setup__()
 
-        if ('gift_card', 'Gift Card') not in cls.type.selection:
-            cls.type.selection.append(('gift_card', 'Gift Card'))
+        # hide product and unit fields
+        cls.product.states['invisible'] |= Bool(Eval('is_gift_card'))
+        cls.unit.states['invisible'] |= Bool(Eval('is_gift_card'))
 
-        cls.amount.states['invisible'] = \
-            cls.amount.states['invisible'] & ~(Eval('type') == 'gift_card')
+    @classmethod
+    def copy(cls, lines, default=None):
+        if default is None:
+            default = {}
+        default['gift_cards'] = None
+        return super(SaleLine, cls).copy(lines, default=default)
 
-        cls.unit_price.states['invisible'] = \
-            cls.unit_price.states['invisible'] & ~(Eval('type') == 'gift_card')
-
-        cls.unit_price.states['required'] = \
-            cls.unit_price.states['required'] | (Eval('type') == 'gift_card')
-
-    def get_amount(self, name):
-        """
-        Calculate amount for gift card line
-        """
-        if self.type != 'gift_card':
-            return super(SaleLine, self).get_amount(name)
-        return self.unit_price
+    @staticmethod
+    def default_is_gift_card():
+        return False
 
     def get_invoice_line(self, invoice_type):
         """
@@ -58,14 +52,14 @@ class SaleLine:
         GiftCardConfiguration = Pool().get('gift_card.configuration')
         InvoiceLine = Pool().get('account.invoice.line')
 
-        rv = super(SaleLine, self).get_invoice_line(invoice_type)
+        if (not self.is_gift_card) or (invoice_type != 'out_invoice'):
+            # 1. If not gift card, return value by super function
+            # 2. We bill gift cards only when they are sold.
+            #    Returning gift cards are bad for business ;-)
+            return super(SaleLine, self).get_invoice_line(invoice_type)
 
-        if self.type != 'gift_card':
-            return rv
-
-        if invoice_type != 'out_invoice':
-            # We bill gift cards only when they are sold.
-            # Returning gift cards are bad for business ;-)
+        if self.invoice_lines:      # pragma: no cover
+            # already invoiced
             return []
 
         with Transaction().set_user(0, set_context=True):
@@ -77,8 +71,7 @@ class SaleLine:
         invoice_line.origin = self
         invoice_line.account = GiftCardConfiguration(1).liability_account
         invoice_line.unit_price = self.unit_price
-        invoice_line.quantity = 1   # FIXME
-        invoice_line.message = self.message
+        invoice_line.quantity = self.quantity
 
         if not invoice_line.account:
             self.raise_user_error(
@@ -88,40 +81,57 @@ class SaleLine:
 
         return [invoice_line]
 
-    @fields.depends(
-        'type', 'quantity', 'unit_price', 'unit',
-        '_parent_sale.currency'
-    )
-    def on_change_with_amount(self):
-        if self.type != 'gift_card':
-            return super(SaleLine, self).on_change_with_amount()
+    @fields.depends('is_gift_card')
+    def on_change_is_gift_card(self):
+        ModelData = Pool().get('ir.model.data')
 
-        # For gift card the price is the gift card value
-        return self.unit_price or Decimal('0.0')
+        if self.is_gift_card:
+            return {
+                'product': None,
+                'description': 'Gift Card',
+                'unit': ModelData.get_id('product', 'uom_unit'),
+            }
+        return {
+            'description': None,
+            'unit': None,
+        }
 
-    def create_gift_card(self):
+    def create_gift_cards(self):
         '''
         Create the actual gift card for this line
         '''
         GiftCard = Pool().get('gift_card.gift_card')
 
-        if self.type != 'gift_card':
+        if not self.is_gift_card:
+            # Not a gift card line
             return None
 
-        gift_card, = GiftCard.create([{
+        if self.gift_cards:     # pragma: no cover
+            # Cards already created
+            return None
+
+        gift_cards = GiftCard.create([{
             'amount': self.amount,
             'sale_line': self.id,
             'message': self.message,
-        }])
+        } for each in range(0, int(self.quantity))])
 
-        GiftCard.activate([gift_card])
+        # TODO: have option of creating card after invoice is paid ?
+        GiftCard.activate(gift_cards)
 
-        return gift_card
+        return gift_cards
 
 
 class Sale:
     "Sale"
     __name__ = 'sale.sale'
+
+    def create_gift_cards(self):
+        '''
+        Create the gift cards if not already created
+        '''
+        for line in filter(lambda l: l.is_gift_card, self.lines):
+            line.create_gift_cards()
 
     @classmethod
     @ModelView.button
@@ -130,28 +140,9 @@ class Sale:
         Create gift card on processing sale
         """
 
-        rv = super(Sale, cls).process(sales)
+        super(Sale, cls).process(sales)
 
         for sale in sales:
-            map(
-                lambda line: line.create_gift_card(),
-                filter(lambda l: l.type == 'gift_card', sale.lines)
-            )
-        return rv
-
-    @classmethod
-    def get_amount(cls, sales, names):
-        """
-        Add amount of gift card line to total amount of sale
-        """
-        rv = super(Sale, cls).get_amount(sales, names)
-        for sale in sales:
-            if sale.untaxed_amount_cache:
-                continue
-            for line in filter(lambda l: l.type == 'gift_card', sale.lines):
-                if 'total_amount' in rv:
-                    rv['total_amount'][sale.id] += line.amount
-                if 'untaxed_amount' in rv:
-                    rv['untaxed_amount'][sale.id] += line.amount
-
-        return rv
+            if sale.state not in ('confirmed', 'processing', 'done'):
+                continue        # pragma: no cover
+            sale.create_gift_cards()

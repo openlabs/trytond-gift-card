@@ -1,9 +1,15 @@
 <?xml version="1.0"?>
-
 <data>
+    <xpath expr="//notebook/page/field[@name='product']" position="after">
+        <label name="is_gift_card"/>
+        <field name="is_gift_card"/>
+    </xpath>    
     <xpath expr="//notebook" position="inside">
-        <page name="message">
-            <field name="message"/>
+        <page states="{'invisible': ~Bool(Eval('is_gift_card'))}" string="Gift Cards" id="gift_cards">
+            <separator name="message" colspan="4"/>
+            <field name="message" colspan="4"
+                  spell="Get(Eval('_parent_sale', {}), 'party_lang')"/>
+            <field name="gift_cards" colspan="4"/>
         </page>
     </xpath>
 </data>

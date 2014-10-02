@@ -13,7 +13,7 @@ from trytond.pool import Pool
 from trytond.transaction import Transaction
 from trytond.report import Report
 
-__all__ = ['GiftCard', 'GiftCardSaleLine', 'GiftCardReport']
+__all__ = ['GiftCard', 'GiftCardReport']
 
 
 class GiftCard(Workflow, ModelSQL, ModelView):
@@ -22,7 +22,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     _rec_name = 'number'
 
     number = fields.Char(
-        'Number', select=True, readonly=True,
+        'Number', select=True, readonly=True, required=True,
         help='Number of the gift card'
     )
     origin = fields.Reference(
@@ -75,10 +75,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         ('used', 'Used'),
     ], 'State', readonly=True, required=True)
 
-    sale_line = fields.One2One(
-        'gift_card.gift_card-sale.line', 'gift_card', 'sale_line', "Sale Line",
-        readonly=True
-    )
+    sale_line = fields.Many2One('sale.line', "Sale Line", readonly=True)
 
     sale = fields.Function(
         fields.Many2One('sale.sale', "Sale"), 'get_sale'
@@ -139,7 +136,10 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     @classmethod
     def __setup__(cls):
         super(GiftCard, cls).__setup__()
-
+        cls._sql_constraints = [
+            ('number_uniq', 'UNIQUE(number)',
+             'The number of the gift card must be unique.')
+        ]
         cls._error_messages.update({
             'deletion_not_allowed':
                 "Gift cards can not be deleted in active state"
@@ -167,14 +167,37 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         })
 
     @classmethod
+    def create(cls, vlist):
+        Sequence = Pool().get('ir.sequence')
+        Configuration = Pool().get('gift_card.configuration')
+
+        vlist = [x.copy() for x in vlist]
+        for values in vlist:
+            if not values.get('number'):
+                values['number'] = Sequence.get_id(
+                    Configuration(1).number_sequence.id
+                )
+        return super(GiftCard, cls).create(vlist)
+
+    @classmethod
+    def copy(cls, gift_cards, default=None):
+        if default is None:
+            default = {}
+        default = default.copy()
+        default['number'] = None
+        default['sale_line'] = None
+        default['state'] = cls.default_state()
+        default['payment_transactions'] = None
+        return super(GiftCard, cls).copy(gift_cards, default=default)
+
+    @classmethod
     @ModelView.button
     @Workflow.transition('active')
     def activate(cls, gift_cards):
         """
         Set gift cards to active state
         """
-        for card in gift_cards:
-            card.generate_sequence()
+        pass
 
     @classmethod
     @ModelView.button
@@ -198,18 +221,6 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     def get_origin(cls):
         return [(None, '')]
 
-    def generate_sequence(self):
-        """
-        Fills the code field with number sequence
-
-        """
-        Sequence = Pool().get('ir.sequence')
-        Configuration = Pool().get('gift_card.configuration')
-
-        if not self.number:
-            self.number = Sequence.get_id(Configuration(1).number_sequence.id)
-            self.save()
-
     @classmethod
     def delete(cls, gift_cards):
         """
@@ -221,20 +232,6 @@ class GiftCard(Workflow, ModelSQL, ModelView):
                 cls.raise_user_error("deletion_not_allowed")
 
         return super(GiftCard, cls).delete(gift_cards)
-
-
-class GiftCardSaleLine(ModelSQL):
-    "Gift Card Sale Line"
-
-    __name__ = 'gift_card.gift_card-sale.line'
-
-    gift_card = fields.Many2One(
-        "gift_card.gift_card", "Gift Card", required=True, select=True
-    )
-
-    sale_line = fields.Many2One(
-        'sale.line', 'Sale Line', required=True, select=True
-    )
 
 
 class GiftCardReport(Report):

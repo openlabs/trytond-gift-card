@@ -105,11 +105,11 @@ class TestGiftCard(TestBase):
                             'description': 'Test description1',
                             'product': self.product1.id,
                         }, {
-                            'type': 'gift_card',
+                            'is_gift_card': True,
                             'quantity': 1,
                             'unit': self.uom,
                             'unit_price': 500,
-                            'description': 'Test description2',
+                            'description': 'Gift Card',
                         }])
                     ]
 
@@ -194,10 +194,13 @@ class TestGiftCard(TestBase):
 
                 self.assertFalse(GiftCard.search([]))
 
-                sale_line.create_gift_card()
+                sale_line.create_gift_cards()
 
                 # No gift card is created
                 self.assertFalse(GiftCard.search([]))
+
+                sale_line3, = SaleLine.copy([sale_line])
+                self.assertFalse(sale_line3.gift_cards)
 
     def test0025_gift_card_on_processing_sale_without_liability_account(self):
         """
@@ -228,7 +231,7 @@ class TestGiftCard(TestBase):
                             'description': 'Test description1',
                             'product': self.product1.id,
                         }, {
-                            'type': 'gift_card',
+                            'is_gift_card': True,
                             'quantity': 1,
                             'unit': self.uom,
                             'unit_price': 500,
@@ -259,7 +262,6 @@ class TestGiftCard(TestBase):
         Check if amount is changed with quantity and unit price
         """
         SaleLine = POOL.get('sale.line')
-        InvoiceLine = POOL.get('account.invoice.line')
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             self.setup_defaults()
@@ -269,42 +271,19 @@ class TestGiftCard(TestBase):
                 # Sale line as gift card
                 sale_line = SaleLine(
                     unit_price=Decimal('22.56789'),
-                    type='gift_card', sale=None
+                    type='line', sale=None
                 )
 
-                self.assertEqual(
-                    sale_line.on_change_with_amount(), Decimal('22.56789')
-                )
+                on_change_vals = sale_line.on_change_is_gift_card()
+                self.assertTrue('description' in on_change_vals)
+                self.assertTrue('product' not in on_change_vals)
 
-                # Sale Line with type other than "gift_card"
-                sale_line = SaleLine(
-                    quantity=3, unit_price=Decimal('22.56789'),
-                    type='subtotal', sale=None
-                )
+                sale_line.is_gift_card = True
+                on_change_vals = sale_line.on_change_is_gift_card()
 
-                self.assertEqual(
-                    sale_line.on_change_with_amount(), Decimal('0')
-                )
-
-                # Invoice line as gift card
-                invoice_line = InvoiceLine(
-                    unit_price=Decimal('22.56789'),
-                    type='gift_card', sale=None
-                )
-
-                self.assertEqual(
-                    invoice_line.on_change_with_amount(), Decimal('22.56789')
-                )
-
-                # Invoice Line with type other than "gift_card"
-                invoice_line = InvoiceLine(
-                    unit_price=Decimal('22.56789'),
-                    type='subtotal', sale=None
-                )
-
-                self.assertEqual(
-                    invoice_line.on_change_with_amount(), Decimal('0')
-                )
+                self.assertEqual(on_change_vals['product'], None)
+                self.assertTrue('description' in on_change_vals)
+                self.assertTrue('unit' in on_change_vals)
 
     def test0040_gift_card_transition(self):
         """
@@ -366,11 +345,14 @@ class TestGiftCard(TestBase):
                 'amount': Decimal('20'),
             }])
 
-            self.assertFalse(gift_card.number)
-
-            GiftCard.activate([gift_card])
-
             self.assertTrue(gift_card.number)
+
+            number = gift_card.number
+            GiftCard.activate([gift_card])
+            self.assertEqual(gift_card.number, number)
+
+            gift_card2, = GiftCard.copy([gift_card])
+            self.assertNotEqual(gift_card2.number, number)
 
     def test0050_authorize_gift_card_payment_gateway_valid_card(self):
         """
@@ -442,7 +424,7 @@ class TestGiftCard(TestBase):
 
                 active_gift_card, = GiftCard.create([{
                     'amount': Decimal('0'),
-                    'number': '45671338',
+                    'number': '45671339',
                     'state': 'active',
                 }])
 
@@ -531,7 +513,7 @@ class TestGiftCard(TestBase):
 
                 active_gift_card, = GiftCard.create([{
                     'amount': Decimal('0'),
-                    'number': '45671338',
+                    'number': '45671339',
                     'state': 'active',
                 }])
 
@@ -654,7 +636,7 @@ class TestGiftCard(TestBase):
 
                 active_gift_card, = GiftCard.create([{
                     'amount': Decimal('0'),
-                    'number': '45671338',
+                    'number': '45671339',
                     'state': 'active',
                 }])
 
@@ -819,7 +801,7 @@ class TestGiftCard(TestBase):
                 # be deleted
                 gift_card, = GiftCard.create([{
                     'amount': Decimal('200'),
-                    'number': '45671338',
+                    'number': '45671339',
                     'state': 'draft',
                 }])
 
