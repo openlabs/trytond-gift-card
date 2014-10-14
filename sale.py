@@ -18,7 +18,10 @@ class SaleLine:
     "SaleLine"
     __name__ = 'sale.line'
 
-    is_gift_card = fields.Boolean('Gift Card')
+    is_gift_card = fields.Function(
+        fields.Boolean('Gift Card'),
+        'on_change_with_is_gift_card'
+    )
     gift_cards = fields.One2Many(
         'gift_card.gift_card', "sale_line", "Gift Cards", readonly=True
     )
@@ -27,23 +30,20 @@ class SaleLine:
     )
 
     @classmethod
-    def __setup__(cls):
-        super(SaleLine, cls).__setup__()
-
-        # hide product and unit fields
-        cls.product.states['invisible'] |= Bool(Eval('is_gift_card'))
-        cls.unit.states['invisible'] |= Bool(Eval('is_gift_card'))
-
-    @classmethod
     def copy(cls, lines, default=None):
         if default is None:
             default = {}
         default['gift_cards'] = None
         return super(SaleLine, cls).copy(lines, default=default)
 
-    @staticmethod
-    def default_is_gift_card():
-        return False
+    @fields.depends('product')
+    def on_change_with_is_gift_card(self, name=None):
+        """
+        Returns boolean value to tell if product is gift card or not
+        """
+        if not self.product:
+            return False
+        return self.product.template.type == 'gift_card'
 
     def get_invoice_line(self, invoice_type):
         """

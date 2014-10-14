@@ -205,6 +205,21 @@ class TestBase(unittest.TestCase):
             'template': self.template1.id,
         }])
 
+        self.gift_card_template, = Template.create([{
+            'name': 'product',
+            'type': 'gift_card',
+            'list_price': Decimal('20'),
+            'cost_price': Decimal('5'),
+            'default_uom': self.uom.id,
+            'salable': True,
+            'sale_uom': self.uom.id,
+            'account_revenue': self.account_revenue.id,
+        }])
+
+        self.gift_card_product, = Product.create([{
+            'template': self.gift_card_template,
+        }])
+
     def create_payment_gateway(self, provider='gift_card'):
         """
         Create payment gateway
