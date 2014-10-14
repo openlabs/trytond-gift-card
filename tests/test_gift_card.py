@@ -140,6 +140,8 @@ class TestGiftCard(TestBase):
                 self.assertFalse(sale_line2.is_gift_card)
                 self.assertFalse(sale_line3.is_gift_card)
 
+                self.assertTrue(sale_line1.gift_card_delivery_mode, 'virtual')
+
                 # Gift card line amount is included in untaxed amount
                 self.assertEqual(sale.untaxed_amount, 900)
 

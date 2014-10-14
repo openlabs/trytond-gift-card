@@ -3,6 +3,10 @@
     <xpath expr="//notebook/page/field[@name='product']" position="after">
         <label name="is_gift_card"/>
         <field name="is_gift_card"/>
+        <label name="gift_card_delivery_mode"/>
+        <field name="gift_card_delivery_mode"/>
+        <label name="recipient_email"/>
+        <field name="recipient_email"/>
     </xpath>    
     <xpath expr="//notebook" position="inside">
         <page states="{'invisible': ~Bool(Eval('is_gift_card'))}" string="Gift Cards" id="gift_cards">

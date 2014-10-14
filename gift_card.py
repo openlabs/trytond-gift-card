@@ -85,6 +85,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         readonly=True
     )
     message = fields.Text("Message")
+    recipient_email = fields.Char("Recipient Email", readonly=True)
 
     def get_sale(self, name):
         """
@@ -197,7 +198,10 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         """
         Set gift cards to active state
         """
-        pass
+        for gift_card in gift_cards:
+            if gift_card.recipient_email:
+                # TODO: Send gift card to this email
+                pass
 
     @classmethod
     @ModelView.button

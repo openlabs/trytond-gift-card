@@ -18,6 +18,15 @@ class SaleLine:
     "SaleLine"
     __name__ = 'sale.line'
 
+    gift_card_delivery_mode = fields.Selection([
+        ('virtual', 'Virtual'),
+        ('physical', 'Physical'),
+        ('combined', 'Combined'),
+    ], 'Gift Card Delivery Mode', states={
+        'invisible': ~Bool(Eval('is_gift_card')),
+        'required': Bool(Eval('is_gift_card')),
+    }, depends=['type'], required=True)
+
     is_gift_card = fields.Function(
         fields.Boolean('Gift Card'),
         'on_change_with_is_gift_card'
@@ -28,6 +37,23 @@ class SaleLine:
     message = fields.Text(
         "Message", states={'invisible': ~Bool(Eval('is_gift_card'))}
     )
+
+    recipient_email = fields.Char(
+        "Recipient Email", states={
+            'invisible': ~(
+                Bool(Eval('is_gift_card')) &
+                Eval('gift_card_delivery_mode') == 'virtual'
+            ),
+            'required': (
+                Bool(Eval('is_gift_card')) &
+                Eval('gift_card_delivery_mode') == 'virtual'
+            ),
+        }, depends=['gift_card_delivery_mode']
+    )
+
+    @staticmethod
+    def default_gift_card_delivery_mode():
+        return 'virtual'
 
     @classmethod
     def copy(cls, lines, default=None):
