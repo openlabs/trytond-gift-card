@@ -80,6 +80,7 @@ class TestGiftCard(TestBase):
         GiftCard = POOL.get('gift_card.gift_card')
         Invoice = POOL.get('account.invoice')
         Configuration = POOL.get('gift_card.configuration')
+        SaleLine = POOL.get('sale.line')
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
 
@@ -105,15 +106,37 @@ class TestGiftCard(TestBase):
                             'description': 'Test description1',
                             'product': self.product1.id,
                         }, {
-                            'is_gift_card': True,
                             'quantity': 1,
                             'unit': self.uom,
                             'unit_price': 500,
                             'description': 'Gift Card',
+                            'product': self.gift_card_product,
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
                         }])
                     ]
 
                 }])
+
+                sale_line1, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', self.gift_card_product.id),
+                ])
+
+                sale_line2, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', self.product1.id),
+                ])
+
+                sale_line3, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', None),
+                ])
+
+                self.assertTrue(sale_line1.is_gift_card)
+                self.assertFalse(sale_line2.is_gift_card)
+                self.assertFalse(sale_line3.is_gift_card)
 
                 # Gift card line amount is included in untaxed amount
                 self.assertEqual(sale.untaxed_amount, 900)
@@ -231,11 +254,11 @@ class TestGiftCard(TestBase):
                             'description': 'Test description1',
                             'product': self.product1.id,
                         }, {
-                            'is_gift_card': True,
                             'quantity': 1,
                             'unit': self.uom,
                             'unit_price': 500,
                             'description': 'Test description2',
+                            'product': self.gift_card_product
                         }])
                     ]
 
