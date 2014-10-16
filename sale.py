@@ -41,9 +41,7 @@ class SaleLine:
         """
         Returns boolean value to tell if product is gift card or not
         """
-        if not self.product:
-            return False
-        return self.product.template.type == 'gift_card'
+        return self.product and self.product.template.is_gift_card
 
     def get_invoice_line(self, invoice_type):
         """

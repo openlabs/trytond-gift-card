@@ -42,6 +42,7 @@ class TestBase(unittest.TestCase):
         self.SubDivision = POOL.get('country.subdivision')
         self.Sequence = POOL.get('ir.sequence')
         self.Account = POOL.get('account.account')
+        self.GiftCard = POOL.get('gift_card.gift_card')
 
     def _create_fiscal_year(self, date_=None, company=None):
         """
@@ -150,8 +151,6 @@ class TestBase(unittest.TestCase):
         """
         User = POOL.get('res.user')
         Uom = POOL.get('product.uom')
-        Template = POOL.get('product.template')
-        Product = POOL.get('product.product')
 
         self.usd, = self.Currency.create([{
             'name': 'US Dollar',
@@ -190,7 +189,15 @@ class TestBase(unittest.TestCase):
 
         self.uom, = Uom.search([('name', '=', 'Unit')])
 
-        self.template1, = Template.create([{
+        self.product = self.create_product()
+
+    def create_product(self, is_gift_card=False):
+        """
+        Create default product
+        """
+        Template = POOL.get('product.template')
+
+        values = {
             'name': 'product',
             'type': 'goods',
             'list_price': Decimal('20'),
@@ -199,26 +206,26 @@ class TestBase(unittest.TestCase):
             'salable': True,
             'sale_uom': self.uom.id,
             'account_revenue': self.account_revenue.id,
-        }])
+            'products': [
+                ('create', [{
+                    'code': 'Test Product'
+                }])
+            ]
+        }
 
-        self.product1, = Product.create([{
-            'template': self.template1.id,
-        }])
+        if is_gift_card:
+            active_gift_card, = self.GiftCard.create([{
+                'amount': Decimal('150'),
+                'number': 'GC12344',
+                'state': 'active',
+                'currency': self.usd,
+            }])
+            values.update({
+                'is_gift_card': True,
+                'gift_card': active_gift_card,
+            })
 
-        self.gift_card_template, = Template.create([{
-            'name': 'product',
-            'type': 'gift_card',
-            'list_price': Decimal('20'),
-            'cost_price': Decimal('5'),
-            'default_uom': self.uom.id,
-            'salable': True,
-            'sale_uom': self.uom.id,
-            'account_revenue': self.account_revenue.id,
-        }])
-
-        self.gift_card_product, = Product.create([{
-            'template': self.gift_card_template,
-        }])
+        return Template.create([values])[0]
 
     def create_payment_gateway(self, provider='gift_card'):
         """

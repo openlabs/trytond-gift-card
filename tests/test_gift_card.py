@@ -86,6 +86,8 @@ class TestGiftCard(TestBase):
 
             self.setup_defaults()
 
+            gift_card_product = self.create_product(is_gift_card=True)
+
             with Transaction().set_context({'company': self.company.id}):
 
                 Configuration.create([{
@@ -104,13 +106,13 @@ class TestGiftCard(TestBase):
                             'unit': self.uom,
                             'unit_price': 200,
                             'description': 'Test description1',
-                            'product': self.product1.id,
+                            'product': self.product.id,
                         }, {
                             'quantity': 1,
                             'unit': self.uom,
                             'unit_price': 500,
                             'description': 'Gift Card',
-                            'product': self.gift_card_product,
+                            'product': gift_card_product,
                         }, {
                             'type': 'comment',
                             'description': 'Test line',
@@ -121,12 +123,12 @@ class TestGiftCard(TestBase):
 
                 sale_line1, = SaleLine.search([
                     ('sale', '=', sale.id),
-                    ('product', '=', self.gift_card_product.id),
+                    ('product', '=', gift_card_product.id),
                 ])
 
                 sale_line2, = SaleLine.search([
                     ('sale', '=', sale.id),
-                    ('product', '=', self.product1.id),
+                    ('product', '=', self.product.id),
                 ])
 
                 sale_line3, = SaleLine.search([
@@ -154,7 +156,9 @@ class TestGiftCard(TestBase):
                 self.assertEqual(sale.untaxed_amount, 900)
                 self.assertEqual(sale.total_amount, 900)
 
-                self.assertFalse(GiftCard.search([]))
+                self.assertFalse(
+                    GiftCard.search([('sale_line', '=', sale_line1.id)])
+                )
 
                 self.assertFalse(Invoice.search([]))
 
@@ -163,13 +167,21 @@ class TestGiftCard(TestBase):
                 self.assertEqual(sale.untaxed_amount, 900)
                 self.assertEqual(sale.total_amount, 900)
 
-                self.assertTrue(GiftCard.search([]))
+                self.assertTrue(
+                    GiftCard.search([('sale_line', '=', sale_line1.id)])
+                )
 
-                self.assertEqual(GiftCard.search([], count=True), 1)
+                self.assertEqual(
+                    GiftCard.search(
+                        [('sale_line', '=', sale_line1.id)], count=True
+                    ), 1
+                )
 
                 self.assertEqual(Invoice.search([], count=True), 1)
 
-                gift_card, = GiftCard.search([])
+                gift_card, = GiftCard.search([
+                    ('sale_line', '=', sale_line1.id)
+                ])
 
                 invoice, = Invoice.search([])
 
@@ -212,15 +224,19 @@ class TestGiftCard(TestBase):
                     'unit': self.uom,
                     'unit_price': 200,
                     'description': 'Test description1',
-                    'product': self.product1.id,
+                    'product': self.product.id,
                 }])
 
-                self.assertFalse(GiftCard.search([]))
+                self.assertFalse(
+                    GiftCard.search([('sale_line', '=', sale_line.id)])
+                )
 
                 sale_line.create_gift_cards()
 
                 # No gift card is created
-                self.assertFalse(GiftCard.search([]))
+                self.assertFalse(
+                    GiftCard.search([('sale_line', '=', sale_line.id)])
+                )
 
                 sale_line3, = SaleLine.copy([sale_line])
                 self.assertFalse(sale_line3.gift_cards)
@@ -238,6 +254,8 @@ class TestGiftCard(TestBase):
 
             self.setup_defaults()
 
+            gift_card_product = self.create_product(is_gift_card=True)
+
             with Transaction().set_context({'company': self.company.id}):
                 sale, = Sale.create([{
                     'reference': 'Sale1',
@@ -252,13 +270,13 @@ class TestGiftCard(TestBase):
                             'unit': self.uom,
                             'unit_price': 200,
                             'description': 'Test description1',
-                            'product': self.product1.id,
+                            'product': self.product.id,
                         }, {
                             'quantity': 1,
                             'unit': self.uom,
                             'unit_price': 500,
                             'description': 'Test description2',
-                            'product': self.gift_card_product
+                            'product': gift_card_product
                         }])
                     ]
 
@@ -273,7 +291,9 @@ class TestGiftCard(TestBase):
                 Sale.quote([sale])
                 Sale.confirm([sale])
 
-                self.assertFalse(GiftCard.search([]))
+                self.assertFalse(
+                    GiftCard.search([('sale_line.sale', '=', sale.id)])
+                )
 
                 self.assertFalse(Invoice.search([]))
 

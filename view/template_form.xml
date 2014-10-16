@@ -1,0 +1,10 @@
+<data>
+      <xpath expr="//field[@name='active']" position="after">
+        <label name="is_gift_card" />
+        <field name="is_gift_card" />
+        <newline />
+        <label name="gift_card" />
+        <field name="gift_card" />
+      </xpath>
+
+</data>
