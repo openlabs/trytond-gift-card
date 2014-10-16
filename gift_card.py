@@ -12,6 +12,10 @@ from trytond.pyson import Eval, If
 from trytond.pool import Pool
 from trytond.transaction import Transaction
 from trytond.report import Report
+from jinja2 import Environment, PackageLoader
+from nereid import render_email
+from trytond.config import CONFIG
+
 
 __all__ = ['GiftCard', 'GiftCardReport']
 
@@ -85,7 +89,19 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         readonly=True
     )
     message = fields.Text("Message")
-    recipient_email = fields.Char("Recipient Email", readonly=True)
+    recipient_email = fields.Char(
+        "Recipient Email", states={
+            'readonly': Eval('state') != 'draft'
+        }
+    )
+
+    recipient_name = fields.Char(
+        "Recipient Name", states={
+            'readonly': Eval('state') != 'draft'
+        }
+    )
+
+    is_email_sent = fields.Boolean("Is Email Sent ?", readonly=True)
 
     def get_sale(self, name):
         """
@@ -199,9 +215,8 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         Set gift cards to active state
         """
         for gift_card in gift_cards:
-            if gift_card.recipient_email:
-                # TODO: Send gift card to this email
-                pass
+            if not gift_card.is_email_sent:
+                gift_card.send_gift_card_as_email()
 
     @classmethod
     @ModelView.button
@@ -236,6 +251,38 @@ class GiftCard(Workflow, ModelSQL, ModelView):
                 cls.raise_user_error("deletion_not_allowed")
 
         return super(GiftCard, cls).delete(gift_cards)
+
+    def send_gift_card_as_email(self):
+        """
+        Send gift card as an attachment in the email
+        """
+        EmailQueue = Pool().get('email.queue')
+        GiftCardReport = Pool().get('gift_card.gift_card', type='report')
+
+        if not self.recipient_email:
+            return
+
+        env = Environment(loader=PackageLoader(
+            'trytond.modules.gift_card', 'emails'
+        ))
+
+        val = GiftCardReport.execute([self.id], {})
+
+        email_gift_card = render_email(
+            CONFIG['smtp_from'], self.recipient_email,
+            "Gift Card - %s" % self.number,
+            html_template=env.get_template('gift_card_html.html'),
+            text_template=env.get_template('gift_card_text.html'),
+            attachments={"%s.%s" % (val[3], val[0]): val[1]},
+            card=self,
+        )
+
+        EmailQueue.queue_mail(
+            CONFIG['smtp_from'], self.recipient_email,
+            email_gift_card.as_string()
+        )
+        self.is_email_sent = True
+        self.save()
 
 
 class GiftCardReport(Report):

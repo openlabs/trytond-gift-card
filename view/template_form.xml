@@ -5,6 +5,8 @@
         <newline />
         <label name="gift_card" />
         <field name="gift_card" />
+        <label name="gift_card_delivery_mode" />
+        <field name="gift_card_delivery_mode" />
       </xpath>
 
 </data>

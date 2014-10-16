@@ -26,6 +26,34 @@ class Template:
         }, domain=[('state', '=', 'active')], depends=['is_gift_card']
     )
 
+    gift_card_delivery_mode = fields.Selection([
+        ('virtual', 'Virtual'),
+        ('physical', 'Physical'),
+        ('combined', 'Combined'),
+    ], 'Gift Card Delivery Mode', states={
+        'invisible': ~Bool(Eval('is_gift_card')),
+        'required': Bool(Eval('is_gift_card')),
+    }, depends=['is_gift_card'])
+
+    @staticmethod
+    def default_gift_card_delivery_mode():
+        return 'physical'
+
     @staticmethod
     def default_is_gift_card():
         return False
+
+    @fields.depends('type', 'is_gift_card')
+    def on_change_with_gift_card_delivery_mode(self):
+        """
+        Delivery mode must be changed to virtual for service product and
+        physical for goods
+        """
+        if not self.is_gift_card:
+            return None
+
+        if self.type == 'service':
+            return 'virtual'
+
+        if self.type == 'goods':
+            return 'physical'

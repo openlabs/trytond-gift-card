@@ -85,7 +85,8 @@ requires = [
 ]
 
 MODULE2PREFIX = {
-    'sale_payment_gateway': 'openlabs'
+    'sale_payment_gateway': 'openlabs',
+    'email_queue': 'openlabs',
 }
 
 MODULE = "gift_card"
@@ -120,7 +121,7 @@ setup(
         'trytond.modules.%s' % MODULE: info.get('xml', [])
         + info.get('translation', [])
         + ['tryton.cfg', 'locale/*.po', 'tests/*.rst', 'reports/*.odt']
-        + ['view/*.xml', '*.odt'],
+        + ['view/*.xml', '*.odt', 'emails/*.html'],
     },
     classifiers=[
         'Development Status :: 4 - Beta',

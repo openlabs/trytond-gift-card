@@ -4,12 +4,20 @@
     <field name="number"/>
     <label name="amount"/>
     <field name="amount"/>
-    <label name="currency"/>
-    <field name="currency"/>
-    <label name="sale"/>
-    <field name="sale"/>
     <newline/>
     <notebook>
+       <page id="general" string="General">
+           <label name="currency"/>
+           <field name="currency"/>
+           <label name="sale"/>
+           <field name="sale"/>
+           <newline/>
+           <separator id="recipient_details" string="Recipient Details" colspan="4"/>
+           <label name="recipient_email"/>
+           <field name="recipient_email"/>
+           <label name="recipient_name"/>
+           <field name="recipient_name"/>
+       </page>
        <page string="Payment Transactions" id="transactions">
            <field name="payment_transactions"/>
        </page>

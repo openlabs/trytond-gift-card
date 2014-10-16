@@ -21,6 +21,8 @@ from trytond.transaction import Transaction
 from decimal import Decimal
 from test_base import TestBase
 from trytond.exceptions import UserError
+from trytond.config import CONFIG
+CONFIG['smtp_from'] = "test@ol.in"
 
 
 class TestGiftCard(TestBase):
@@ -140,7 +142,7 @@ class TestGiftCard(TestBase):
                 self.assertFalse(sale_line2.is_gift_card)
                 self.assertFalse(sale_line3.is_gift_card)
 
-                self.assertTrue(sale_line1.gift_card_delivery_mode, 'virtual')
+                self.assertEqual(sale_line1.gift_card_delivery_mode, 'physical')
 
                 # Gift card line amount is included in untaxed amount
                 self.assertEqual(sale.untaxed_amount, 900)
@@ -278,7 +280,7 @@ class TestGiftCard(TestBase):
                             'unit': self.uom,
                             'unit_price': 500,
                             'description': 'Test description2',
-                            'product': gift_card_product
+                            'product': gift_card_product,
                         }])
                     ]
 
@@ -851,6 +853,238 @@ class TestGiftCard(TestBase):
                 }])
 
                 GiftCard.delete([gift_card])
+
+    def test0100_send_virtual_gift_cards(self):
+        """
+        Check if virtual gift cards are sent through email
+        """
+        Sale = POOL.get('sale.sale')
+        GiftCard = POOL.get('gift_card.gift_card')
+        Invoice = POOL.get('account.invoice')
+        Configuration = POOL.get('gift_card.configuration')
+        SaleLine = POOL.get('sale.line')
+        EmailQueue = POOL.get('email.queue')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
+            self.setup_defaults()
+
+            gift_card_product = self.create_product(
+                mode='virtual', is_gift_card=True
+            )
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                Configuration.create([{
+                    'liability_account': self._get_account_by_kind('revenue').id
+                }])
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'type': 'line',
+                            'quantity': 2,
+                            'unit': self.uom,
+                            'unit_price': 200,
+                            'description': 'Test description1',
+                            'product': self.product.id,
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card',
+                            'product': gift_card_product,
+                            'recipient_email': 'test@gift_card.com',
+                            'recipient_name': 'John Doe',
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+
+                }])
+
+                gift_card_line, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', gift_card_product.id),
+                ])
+
+                self.assertEqual(
+                    gift_card_line.gift_card_delivery_mode, 'virtual'
+                )
+
+                Sale.quote([sale])
+
+                Sale.confirm([sale])
+
+                # No gift card yet
+                self.assertFalse(
+                    GiftCard.search([('sale_line', '=', gift_card_line.id)])
+                )
+
+                # No Email is being sent yet
+                self.assertFalse(
+                    EmailQueue.search([
+                        ('to_addrs', '=', gift_card_line.recipient_email),
+                    ])
+                )
+
+                Sale.process([sale])
+
+                # Gift card is created
+                self.assertTrue(
+                    GiftCard.search([('sale_line', '=', gift_card_line.id)])
+                )
+
+                self.assertEqual(
+                    GiftCard.search(
+                        [('sale_line', '=', gift_card_line.id)], count=True
+                    ), 1
+                )
+
+                self.assertEqual(Invoice.search([], count=True), 1)
+
+                gift_card, = GiftCard.search([
+                    ('sale_line', '=', gift_card_line.id)
+                ])
+
+                self.assertEqual(
+                    gift_card.recipient_email, gift_card_line.recipient_email
+                )
+
+                self.assertEqual(
+                    gift_card.recipient_name, gift_card_line.recipient_name
+                )
+
+                # Email is being sent
+                self.assertTrue(
+                    EmailQueue.search([
+                        ('to_addrs', '=', gift_card_line.recipient_email),
+                    ])
+                )
+
+    def test0110_test_sending_email_multiple_times(self):
+        """
+        Test that email should not be sent multiple times for gift card
+        """
+        GiftCard = POOL.get('gift_card.gift_card')
+        EmailQueue = POOL.get('email.queue')
+        Sale = POOL.get('sale.sale')
+        SaleLine = POOL.get('sale.line')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            with Transaction().set_context({'company': self.company.id}):
+                gift_card_product = self.create_product(
+                    mode='virtual', is_gift_card=True
+                )
+
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'type': 'line',
+                            'quantity': 2,
+                            'unit': self.uom,
+                            'unit_price': 200,
+                            'description': 'Test description1',
+                            'product': self.product.id,
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card',
+                            'product': gift_card_product,
+                            'recipient_email': 'test@gift_card.com',
+                            'recipient_name': 'John Doe',
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+
+                }])
+
+                gift_card_line, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', gift_card_product.id),
+                ])
+
+                gift_card, = GiftCard.create([{
+                    'sale_line': gift_card_line.id,
+                    'amount': Decimal('200'),
+                    'number': '45671338',
+                    'recipient_email': 'test@gift_card.com',
+                    'recipient_name': 'Jhon Doe',
+                }])
+
+                # No Email is being sent yet
+                self.assertFalse(
+                    EmailQueue.search([
+                        ('to_addrs', '=', gift_card.recipient_email),
+                    ])
+                )
+                self.assertFalse(gift_card.is_email_sent)
+
+                # Send email by activating gift card
+                GiftCard.activate([gift_card])
+
+                # Email is being sent
+                self.assertEqual(
+                    EmailQueue.search([
+                        ('to_addrs', '=', gift_card.recipient_email),
+                    ], count=True), 1
+                )
+                self.assertTrue(gift_card.is_email_sent)
+
+                # Try sending email again
+                GiftCard.activate([gift_card])
+
+                # Email is not sent
+                self.assertEqual(
+                    EmailQueue.search([
+                        ('to_addrs', '=', gift_card.recipient_email),
+                    ], count=True), 1
+                )
+
+    def test0120_on_change_product_type(self):
+        """
+        Check value of delivery mode on changing product type
+        """
+        Template = POOL.get('product.template')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            # Check deliveyr method when product is not gift card
+            template = Template(type='service', is_gift_card=False)
+
+            self.assertEqual(
+                template.on_change_with_gift_card_delivery_mode(), None
+            )
+
+            # Check delivery mode for service product
+            template = Template(type='service', is_gift_card=True)
+
+            self.assertEqual(
+                template.on_change_with_gift_card_delivery_mode(), 'virtual'
+            )
+
+            # Check delivery mode for goods
+            template = Template(type='goods', is_gift_card=True)
+
+            self.assertEqual(
+                template.on_change_with_gift_card_delivery_mode(), 'physical'
+            )
 
 
 def suite():
