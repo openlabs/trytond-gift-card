@@ -43,17 +43,43 @@ class Template:
     def default_is_gift_card():
         return False
 
-    @fields.depends('type', 'is_gift_card')
-    def on_change_with_gift_card_delivery_mode(self):
+    @classmethod
+    def __setup__(cls):
+        super(Template, cls).__setup__()
+
+        cls._error_messages.update({
+            'inappropriate_product':
+                'Product %s is not appropriate under %s delivery mode'
+        })
+
+    @classmethod
+    def validate(cls, templates):
         """
-        Delivery mode must be changed to virtual for service product and
-        physical for goods
+        Validates each product template
+        """
+        super(Template, cls).validate(templates)
+
+        for template in templates:
+            template.check_type_and_mode()
+
+    def check_type_and_mode(self):
+        """
+        Type must be service only if delivery mode is virtual
+
+        Type must be goods only if delivery mode is combined or physical
         """
         if not self.is_gift_card:
-            return None
+                return
 
-        if self.type == 'service':
-            return 'virtual'
-
-        if self.type == 'goods':
-            return 'physical'
+        if (
+            self.gift_card_delivery_mode == 'virtual' and
+            self.type != 'service'
+        ) or (
+            self.gift_card_delivery_mode in ['physical', 'combined'] and
+            self.type != 'goods'
+        ):
+            self.raise_user_error(
+                "inappropriate_product", (
+                    self.rec_name, self.gift_card_delivery_mode
+                )
+            )

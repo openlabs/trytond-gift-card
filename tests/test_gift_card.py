@@ -870,7 +870,7 @@ class TestGiftCard(TestBase):
             self.setup_defaults()
 
             gift_card_product = self.create_product(
-                mode='virtual', is_gift_card=True
+                type='service', mode='virtual', is_gift_card=True
             )
 
             with Transaction().set_context({'company': self.company.id}):
@@ -981,7 +981,7 @@ class TestGiftCard(TestBase):
 
             with Transaction().set_context({'company': self.company.id}):
                 gift_card_product = self.create_product(
-                    mode='virtual', is_gift_card=True
+                    type='service', mode='virtual', is_gift_card=True
                 )
 
                 sale, = Sale.create([{
@@ -1056,35 +1056,55 @@ class TestGiftCard(TestBase):
                     ], count=True), 1
                 )
 
-    def test0120_on_change_product_type(self):
+    def test0112_validate_product_type_and_mode(self):
         """
-        Check value of delivery mode on changing product type
+        Check if gift card product is service product for virtual mode and
+        goods otherwise
         """
-        Template = POOL.get('product.template')
-
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
             self.setup_defaults()
 
-            # Check deliveyr method when product is not gift card
-            template = Template(type='service', is_gift_card=False)
+            with Transaction().set_context({'company': self.company.id}):
 
-            self.assertEqual(
-                template.on_change_with_gift_card_delivery_mode(), None
-            )
+                # Create gift card product of service type in physical mode
+                with self.assertRaises(UserError):
+                    self.create_product(
+                        type='service', mode='physical', is_gift_card=True,
+                    )
 
-            # Check delivery mode for service product
-            template = Template(type='service', is_gift_card=True)
+                # Create gift card product of service type in combined mode
+                with self.assertRaises(UserError):
+                    self.create_product(
+                        type='service', mode='combined', is_gift_card=True
+                    )
 
-            self.assertEqual(
-                template.on_change_with_gift_card_delivery_mode(), 'virtual'
-            )
+                # Create gift card product of goods type in virtual mode
+                with self.assertRaises(UserError):
+                    self.create_product(
+                        type='goods', mode='virtual', is_gift_card=True
+                    )
 
-            # Check delivery mode for goods
-            template = Template(type='goods', is_gift_card=True)
+                # In virtual mode product can be created with service type
+                # only
+                service_product = self.create_product(
+                    type='service', mode='virtual', is_gift_card=True
+                )
 
-            self.assertEqual(
-                template.on_change_with_gift_card_delivery_mode(), 'physical'
-            )
+                self.assert_(service_product)
+
+                # In physical mode product can be created with goods type
+                # only
+                goods_product = self.create_product(
+                    type='goods', mode='physical', is_gift_card=True
+                )
+                self.assert_(goods_product)
+
+                # In combined mode product can be created with goods type only
+                goods_product = self.create_product(
+                    type='goods', mode='combined', is_gift_card=True
+                )
+                self.assert_(goods_product)
 
 
 def suite():
