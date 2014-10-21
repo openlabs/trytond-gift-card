@@ -215,7 +215,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         Set gift cards to active state
         """
         for gift_card in gift_cards:
-            if not gift_card.is_email_sent:
+            if gift_card.recipient_email and not gift_card.is_email_sent:
                 gift_card.send_gift_card_as_email()
 
     @classmethod
@@ -259,7 +259,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         EmailQueue = Pool().get('email.queue')
         GiftCardReport = Pool().get('gift_card.gift_card', type='report')
 
-        if not self.recipient_email:
+        if not self.recipient_email:  # pragma: no cover
             return
 
         env = Environment(loader=PackageLoader(

@@ -43,11 +43,11 @@ class SaleLine:
         "Recipient Email", states={
             'invisible': ~(
                 Bool(Eval('is_gift_card')) &
-                (Eval('gift_card_delivery_mode') == 'virtual')
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
             ),
             'required': (
                 Bool(Eval('is_gift_card')) &
-                (Eval('gift_card_delivery_mode') == 'virtual')
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
             ),
         }, depends=['gift_card_delivery_mode', 'is_gift_card']
     )
@@ -56,11 +56,11 @@ class SaleLine:
         "Recipient Name", states={
             'invisible': ~(
                 Bool(Eval('is_gift_card')) &
-                (Eval('gift_card_delivery_mode') == 'virtual')
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
             ),
             'required': (
                 Bool(Eval('is_gift_card')) &
-                (Eval('gift_card_delivery_mode') == 'virtual')
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
             ),
         }, depends=['gift_card_delivery_mode', 'is_gift_card']
     )
