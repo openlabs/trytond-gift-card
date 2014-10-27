@@ -417,7 +417,8 @@ class TestGiftCard(TestBase):
 
                 gateway = self.create_payment_gateway()
 
-                # Case 1: Gift card available amount > amount to be paid
+                # Case 1:
+                # Gift card available amount (150) > amount to be paid (50)
                 payment_transaction = PaymentTransaction(
                     description="Pay invoice using gift card",
                     party=self.party1.id,
@@ -429,7 +430,7 @@ class TestGiftCard(TestBase):
                 )
                 payment_transaction.save()
 
-                payment_transaction.authorize_gift_card()
+                PaymentTransaction.authorize([payment_transaction])
 
                 self.assertEqual(payment_transaction.state, 'authorized')
 
@@ -441,52 +442,22 @@ class TestGiftCard(TestBase):
                     active_gift_card.amount_available, Decimal('100')
                 )
 
-                # Case 2: Gift card available amount = amount to be paid
+                # Case 2: Gift card amount (100) < amount to be paid (300)
                 payment_transaction = PaymentTransaction(
                     description="Pay invoice using gift card",
                     party=self.party1.id,
                     address=self.party1.addresses[0].id,
-                    amount=Decimal('100'),
+                    amount=Decimal('300'),
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
                 )
                 payment_transaction.save()
 
-                payment_transaction.authorize_gift_card()
+                with self.assertRaises(UserError):
+                    PaymentTransaction.authorize([payment_transaction])
 
-                self.assertEqual(payment_transaction.state, 'authorized')
-
-                self.assertEqual(
-                    active_gift_card.amount_authorized, Decimal('150')
-                )
-
-                self.assertEqual(
-                    active_gift_card.amount_available, Decimal('0')
-                )
-
-                active_gift_card, = GiftCard.create([{
-                    'amount': Decimal('0'),
-                    'number': '45671339',
-                    'state': 'active',
-                }])
-
-                # Case 2: Gift card amount < amount to be paid
-                payment_transaction = PaymentTransaction(
-                    description="Pay invoice using gift card",
-                    party=self.party1.id,
-                    address=self.party1.addresses[0].id,
-                    amount=Decimal('100'),
-                    currency=self.company.currency.id,
-                    gateway=gateway.id,
-                    gift_card=active_gift_card,
-                )
-                payment_transaction.save()
-
-                with self.assertRaises(Exception):
-                    payment_transaction.authorize_gift_card()
-
-    def test0055_capture_gift_card_payment_gateway_valid_card(self):
+    def test0055_capture_gift_card(self):
         """
         Test capturing of gift card
         """
@@ -499,38 +470,57 @@ class TestGiftCard(TestBase):
             with Transaction().set_context({'company': self.company.id}):
 
                 active_gift_card, = GiftCard.create([{
-                    'amount': Decimal('150'),
+                    'amount': Decimal('200'),
                     'number': '45671338',
                     'state': 'active',
                 }])
 
                 gateway = self.create_payment_gateway()
 
-                # Case 1: Gift card available amount > amount to be paid
+                self.assertEqual(
+                    active_gift_card.amount_captured, Decimal('0')
+                )
+
+                self.assertEqual(
+                    active_gift_card.amount_authorized, Decimal('0')
+                )
+
+                self.assertEqual(
+                    active_gift_card.amount_available, Decimal('200')
+                )
+
+                # Capture
+                # Case 1
+                # Gift card available amount(200) > amount to be paid (180)
                 payment_transaction = PaymentTransaction(
-                    description="Pay invoice using gift card",
+                    description="Pay using gift card",
                     party=self.party1.id,
                     address=self.party1.addresses[0].id,
-                    amount=Decimal('50'),
+                    amount=Decimal('100'),
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
                 )
                 payment_transaction.save()
 
-                payment_transaction.capture_gift_card()
+                PaymentTransaction.capture([payment_transaction])
 
                 self.assertEqual(payment_transaction.state, 'posted')
 
                 self.assertEqual(
-                    active_gift_card.amount_captured, Decimal('50')
+                    active_gift_card.amount_captured, Decimal('100')
+                )
+                self.assertEqual(
+                    active_gift_card.amount_authorized, Decimal('0')
                 )
 
+                # 200 - 100 = 100
                 self.assertEqual(
                     active_gift_card.amount_available, Decimal('100')
                 )
 
-                # Case 2: Gift card available amount = amount to be paid
+                # Case 2
+                # Gift card available amount (100) = amount to be paid (100)
                 payment_transaction = PaymentTransaction(
                     description="Pay invoice using gift card",
                     party=self.party1.id,
@@ -542,25 +532,29 @@ class TestGiftCard(TestBase):
                 )
                 payment_transaction.save()
 
-                payment_transaction.capture_gift_card()
+                PaymentTransaction.capture([payment_transaction])
 
                 self.assertEqual(payment_transaction.state, 'posted')
                 self.assertEqual(
-                    active_gift_card.amount_captured, Decimal('150')
+                    active_gift_card.amount_captured, Decimal('200')
+                )
+                self.assertEqual(
+                    active_gift_card.amount_authorized, Decimal('0')
                 )
 
+                # 200 - 200 = 0
                 self.assertEqual(
                     active_gift_card.amount_available, Decimal('0')
                 )
                 self.assertEqual(active_gift_card.state, 'used')
 
                 active_gift_card, = GiftCard.create([{
-                    'amount': Decimal('0'),
+                    'amount': Decimal('10'),
                     'number': '45671339',
                     'state': 'active',
                 }])
 
-                # Case 2: Gift card amount < amount to be paid
+                # Case 3: Gift card amount (10) < amount to be paid (100)
                 payment_transaction = PaymentTransaction(
                     description="Pay invoice using gift card",
                     party=self.party1.id,
@@ -572,12 +566,12 @@ class TestGiftCard(TestBase):
                 )
                 payment_transaction.save()
 
-                with self.assertRaises(Exception):
-                    payment_transaction.capture_gift_card()
+                with self.assertRaises(UserError):
+                    PaymentTransaction.capture([payment_transaction])
 
-    def test0055_settle_gift_card_payment_gateway_valid_card(self):
+    def test0057_settle_gift_card(self):
         """
-        Settle gift card by first authorizing it and then capturing the amount
+        Test settlement of gift card
         """
         GiftCard = POOL.get('gift_card.gift_card')
         PaymentTransaction = POOL.get('payment_gateway.transaction')
@@ -588,16 +582,45 @@ class TestGiftCard(TestBase):
             with Transaction().set_context({'company': self.company.id}):
 
                 active_gift_card, = GiftCard.create([{
-                    'amount': Decimal('150'),
+                    'amount': Decimal('200'),
                     'number': '45671338',
                     'state': 'active',
                 }])
 
                 gateway = self.create_payment_gateway()
 
+                # Authorization of gift card
                 # Case 1: Gift card available amount > amount to be paid
                 payment_transaction = PaymentTransaction(
-                    description="Pay invoice using gift card",
+                    description="Pay using gift card",
+                    party=self.party1.id,
+                    address=self.party1.addresses[0].id,
+                    amount=Decimal('100'),
+                    currency=self.company.currency.id,
+                    gateway=gateway.id,
+                    gift_card=active_gift_card,
+                )
+                payment_transaction.save()
+
+                PaymentTransaction.authorize([payment_transaction])
+
+                self.assertEqual(
+                    active_gift_card.amount_captured, Decimal('0')
+                )
+
+                self.assertEqual(
+                    active_gift_card.amount_authorized, Decimal('100')
+                )
+
+                # 200 - 100 = 100
+                self.assertEqual(
+                    active_gift_card.amount_available, Decimal('100')
+                )
+
+                # Settlement
+                # Case 1: Gift card amount (100) > amount to be settled (50)
+                payment_transaction = PaymentTransaction(
+                    description="Pay using gift card",
                     party=self.party1.id,
                     address=self.party1.addresses[0].id,
                     amount=Decimal('50'),
@@ -607,96 +630,36 @@ class TestGiftCard(TestBase):
                 )
                 payment_transaction.save()
 
-                payment_transaction.authorize_gift_card()
+                PaymentTransaction.authorize([payment_transaction])
 
-                self.assertEqual(
-                    active_gift_card.amount_authorized, Decimal('50')
-                )
                 self.assertEqual(
                     active_gift_card.amount_captured, Decimal('0')
                 )
 
                 self.assertEqual(
-                    active_gift_card.amount_available, Decimal('100')
+                    active_gift_card.amount_authorized, Decimal('150')
                 )
 
-                payment_transaction.settle_gift_card()
+                # 100 - 50 = 50
+                self.assertEqual(
+                    active_gift_card.amount_available, Decimal('50')
+                )
+
+                PaymentTransaction.settle([payment_transaction])
 
                 self.assertEqual(payment_transaction.state, 'posted')
 
                 self.assertEqual(
                     active_gift_card.amount_captured, Decimal('50')
                 )
-                self.assertEqual(
-                    active_gift_card.amount_authorized, Decimal('0')
-                )
-
-                self.assertEqual(
-                    active_gift_card.amount_available, Decimal('100')
-                )
-
-                # Case 2: Gift card available amount = amount to be paid
-                payment_transaction = PaymentTransaction(
-                    description="Pay invoice using gift card",
-                    party=self.party1.id,
-                    address=self.party1.addresses[0].id,
-                    amount=Decimal('100'),
-                    currency=self.company.currency.id,
-                    gateway=gateway.id,
-                    gift_card=active_gift_card,
-                )
-                payment_transaction.save()
-
-                payment_transaction.authorize_gift_card()
-
-                self.assertEqual(
-                    active_gift_card.amount_captured, Decimal('50')
-                )
-
                 self.assertEqual(
                     active_gift_card.amount_authorized, Decimal('100')
                 )
 
+                # 200 - 100 - 50 = 50
                 self.assertEqual(
-                    active_gift_card.amount_available, Decimal('0')
+                    active_gift_card.amount_available, Decimal('50')
                 )
-
-                payment_transaction.settle_gift_card()
-
-                self.assertEqual(payment_transaction.state, 'posted')
-                self.assertEqual(
-                    active_gift_card.amount_captured, Decimal('150')
-                )
-
-                self.assertEqual(
-                    active_gift_card.amount_authorized, Decimal('0')
-                )
-
-                self.assertEqual(
-                    active_gift_card.amount_available, Decimal('0')
-                )
-                self.assertEqual(active_gift_card.state, 'used')
-
-                active_gift_card, = GiftCard.create([{
-                    'amount': Decimal('0'),
-                    'number': '45671339',
-                    'state': 'active',
-                }])
-
-                # Case 2: Gift card amount < amount to be paid
-                payment_transaction = PaymentTransaction(
-                    description="Pay invoice using gift card",
-                    party=self.party1.id,
-                    address=self.party1.addresses[0].id,
-                    amount=Decimal('100'),
-                    currency=self.company.currency.id,
-                    gateway=gateway.id,
-                    gift_card=active_gift_card,
-                )
-                payment_transaction.save()
-
-                with self.assertRaises(Exception):
-                    payment_transaction.settle_gift_card()
 
     def test0060_payment_gateway_methods_and_providers(self):
         """
