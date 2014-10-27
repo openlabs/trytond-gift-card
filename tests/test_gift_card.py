@@ -1106,6 +1106,194 @@ class TestGiftCard(TestBase):
                 )
                 self.assert_(goods_product)
 
+    def test0115_test_gc_min_max(self):
+        """
+        Test gift card minimum and maximum amounts on product template
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            gift_card_product = self.create_product(
+                type='service', mode='virtual', is_gift_card=True
+            )
+
+            gc_template = gift_card_product.template
+            gc_template.allow_open_amount = False
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                # gc_min > gc_max
+                gc_template.gc_min = Decimal('70')
+                gc_template.gc_max = Decimal('60')
+
+                with self.assertRaises(UserError):
+                    gc_template.save()
+
+                # gc_min as negative
+                gc_template.gc_min = Decimal('-10')
+                gc_template.gc_max = Decimal('60')
+
+                with self.assertRaises(UserError):
+                    gc_template.save()
+
+                # gc_max as negative
+                gc_template.gc_min = Decimal('10')
+                gc_template.gc_max = Decimal('-80')
+
+                with self.assertRaises(UserError):
+                    gc_template.save()
+
+                # gc_min < gc_max
+                gc_template.gc_min = Decimal('70')
+                gc_template.gc_max = Decimal('100')
+
+                gc_template.save()
+
+    def test0118_validate_gc_amount_on_sale_line(self):
+        """
+        Tests if gift card line amount lies between gc_min and gc_max defined
+        on the tempalte
+        """
+        Sale = POOL.get('sale.sale')
+        SaleLine = POOL.get('sale.line')
+        Configuration = POOL.get('gift_card.configuration')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            Configuration.create([{
+                'liability_account': self._get_account_by_kind('revenue').id
+            }])
+
+            gift_card_product = self.create_product(
+                type='goods', mode='physical', is_gift_card=True
+            )
+
+            gc_template = gift_card_product.template
+            gc_template.allow_open_amount = False
+
+            gc_template.gc_min = Decimal('100')
+            gc_template.gc_max = Decimal('500')
+
+            gc_template.save()
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                # gift card line amount < gc_min
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'type': 'line',
+                            'quantity': 2,
+                            'unit': self.uom,
+                            'unit_price': 200,
+                            'description': 'Test description1',
+                            'product': self.product.id,
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 50,
+                            'description': 'Gift Card',
+                            'product': gift_card_product,
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+
+                }])
+
+                Sale.quote([sale])
+                Sale.confirm([sale])
+
+                with self.assertRaises(UserError):
+                    Sale.process([sale])
+
+                # gift card line amount > gc_max
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'type': 'line',
+                            'quantity': 2,
+                            'unit': self.uom,
+                            'unit_price': 200,
+                            'description': 'Test description1',
+                            'product': self.product.id,
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 700,
+                            'description': 'Gift Card',
+                            'product': gift_card_product,
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+
+                }])
+
+                Sale.quote([sale])
+                Sale.confirm([sale])
+
+                with self.assertRaises(UserError):
+                    Sale.process([sale])
+
+                # gc_max < gift card line amount > gc_min
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'type': 'line',
+                            'quantity': 2,
+                            'unit': self.uom,
+                            'unit_price': 200,
+                            'description': 'Test description1',
+                            'product': self.product.id,
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 400,
+                            'description': 'Gift Card',
+                            'product': gift_card_product,
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+
+                }])
+
+                gift_card_line, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', gift_card_product.id),
+                ])
+
+                Sale.quote([sale])
+                Sale.confirm([sale])
+
+                self.assertEqual(len(gift_card_line.gift_cards), 0)
+
+                Sale.process([sale])
+
+                self.assertEqual(sale.state, 'processing')
+
+                self.assertEqual(len(gift_card_line.gift_cards), 1)
+
 
 def suite():
     """

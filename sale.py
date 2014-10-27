@@ -65,6 +65,15 @@ class SaleLine:
         }, depends=['gift_card_delivery_mode', 'is_gift_card']
     )
 
+    @classmethod
+    def __setup__(cls):
+        super(SaleLine, cls).__setup__()
+
+        cls._error_messages.update({
+            'amounts_out_of_range':
+                'Gift card amount must be within %s %s and %s %s'
+        })
+
     @fields.depends('product', 'is_gift_card')
     def on_change_with_gift_card_delivery_mode(self, name=None):
         """
@@ -153,6 +162,18 @@ class SaleLine:
         if self.gift_cards:     # pragma: no cover
             # Cards already created
             return None
+
+        template = self.product.template
+
+        if not template.allow_open_amount and not (
+            template.gc_min < self.amount < template.gc_max
+        ):
+            self.raise_user_error(
+                "amounts_out_of_range", (
+                    self.sale.currency.code, template.gc_min,
+                    self.sale.currency.code, template.gc_max
+                )
+            )
 
         gift_cards = GiftCard.create([{
             'amount': self.amount,

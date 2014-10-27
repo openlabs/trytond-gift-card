@@ -214,14 +214,8 @@ class TestBase(unittest.TestCase):
         }
 
         if is_gift_card:
-            active_gift_card, = self.GiftCard.create([{
-                'amount': Decimal('150'),
-                'state': 'active',
-                'currency': self.usd,
-            }])
             values.update({
                 'is_gift_card': True,
-                'gift_card': active_gift_card,
                 'gift_card_delivery_mode': mode,
             })
 
