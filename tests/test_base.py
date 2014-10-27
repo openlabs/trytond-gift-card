@@ -191,7 +191,7 @@ class TestBase(unittest.TestCase):
 
         self.product = self.create_product()
 
-    def create_product(self, is_gift_card=False):
+    def create_product(self, type='goods', mode='physical', is_gift_card=False):
         """
         Create default product
         """
@@ -199,7 +199,7 @@ class TestBase(unittest.TestCase):
 
         values = {
             'name': 'product',
-            'type': 'goods',
+            'type': type,
             'list_price': Decimal('20'),
             'cost_price': Decimal('5'),
             'default_uom': self.uom.id,
@@ -216,16 +216,16 @@ class TestBase(unittest.TestCase):
         if is_gift_card:
             active_gift_card, = self.GiftCard.create([{
                 'amount': Decimal('150'),
-                'number': 'GC12344',
                 'state': 'active',
                 'currency': self.usd,
             }])
             values.update({
                 'is_gift_card': True,
                 'gift_card': active_gift_card,
+                'gift_card_delivery_mode': mode,
             })
 
-        return Template.create([values])[0]
+        return Template.create([values])[0].products[0]
 
     def create_payment_gateway(self, provider='gift_card'):
         """

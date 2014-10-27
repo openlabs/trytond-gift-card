@@ -3,9 +3,20 @@
     <xpath expr="//notebook/page/field[@name='product']" position="after">
         <label name="is_gift_card"/>
         <field name="is_gift_card"/>
+        <label name="gift_card_delivery_mode"/>
+        <field name="gift_card_delivery_mode"/>
+        <newline/>
     </xpath>    
     <xpath expr="//notebook" position="inside">
         <page states="{'invisible': ~Bool(Eval('is_gift_card'))}" string="Gift Cards" id="gift_cards">
+            <separator id="recipient_details" string="Recipient Details"
+                  states="{'invisible': Not(And(Bool(Eval('is_gift_card')), Eval('gift_card_delivery_mode').in_(['virtual', 'combined'])))}"
+                  colspan="4"/>
+               <label name="recipient_email"/>
+               <field name="recipient_email"/>
+               <label name="recipient_name"/>
+               <field name="recipient_name"/>
+
             <separator name="message" colspan="4"/>
             <field name="message" colspan="4"
                   spell="Get(Eval('_parent_sale', {}), 'party_lang')"/>

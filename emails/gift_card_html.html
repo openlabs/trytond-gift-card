@@ -1,0 +1,20 @@
+<html>
+    <body>
+    <br><br>
+    Hello {{card.recipient_name}},
+
+    <br>
+    <br>
+
+    <h3>Congrats!!</h3>
+    {{ card.sale.party.name }} just sent a gift card for you worth {{card.currency.code}} {{card.amount }}.
+    <br>
+    Please find your attached gift card.
+    <br>
+    Happy Shopping.
+    <br>
+    Warm Regards,
+    <br>
+    {{ card.sale.company.party.name }}
+    </body>
+</html>

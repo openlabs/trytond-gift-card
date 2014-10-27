@@ -18,6 +18,16 @@ class SaleLine:
     "SaleLine"
     __name__ = 'sale.line'
 
+    gift_card_delivery_mode = fields.Function(
+        fields.Selection([
+            ('virtual', 'Virtual'),
+            ('physical', 'Physical'),
+            ('combined', 'Combined'),
+        ], 'Gift Card Delivery Mode', states={
+            'invisible': ~Bool(Eval('is_gift_card')),
+        }, depends=['is_gift_card']), 'on_change_with_gift_card_delivery_mode'
+    )
+
     is_gift_card = fields.Function(
         fields.Boolean('Gift Card'),
         'on_change_with_is_gift_card'
@@ -28,6 +38,42 @@ class SaleLine:
     message = fields.Text(
         "Message", states={'invisible': ~Bool(Eval('is_gift_card'))}
     )
+
+    recipient_email = fields.Char(
+        "Recipient Email", states={
+            'invisible': ~(
+                Bool(Eval('is_gift_card')) &
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
+            ),
+            'required': (
+                Bool(Eval('is_gift_card')) &
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
+            ),
+        }, depends=['gift_card_delivery_mode', 'is_gift_card']
+    )
+
+    recipient_name = fields.Char(
+        "Recipient Name", states={
+            'invisible': ~(
+                Bool(Eval('is_gift_card')) &
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
+            ),
+            'required': (
+                Bool(Eval('is_gift_card')) &
+                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
+            ),
+        }, depends=['gift_card_delivery_mode', 'is_gift_card']
+    )
+
+    @fields.depends('product', 'is_gift_card')
+    def on_change_with_gift_card_delivery_mode(self, name=None):
+        """
+        Returns delivery mode of the gift card product
+        """
+        if not (self.product and self.is_gift_card):
+            return None
+
+        return self.product.template.gift_card_delivery_mode
 
     @classmethod
     def copy(cls, lines, default=None):
@@ -112,6 +158,8 @@ class SaleLine:
             'amount': self.amount,
             'sale_line': self.id,
             'message': self.message,
+            'recipient_email': self.recipient_email,
+            'recipient_name': self.recipient_name,
         } for each in range(0, int(self.quantity))])
 
         # TODO: have option of creating card after invoice is paid ?
