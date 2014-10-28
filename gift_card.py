@@ -133,12 +133,17 @@ class GiftCard(Workflow, ModelSQL, ModelView):
 
         if name == 'amount_captured':
             return sum([t.amount for t in PaymentTransaction.search([
-                ('state', '=', 'posted'),
+                ('state', 'in', ['posted', 'done']),
                 ('gift_card', '=', self.id)
             ])])
 
         if name == 'amount_available':
-            return self.amount - self.amount_authorized - self.amount_captured
+            return self.amount - sum([
+                t.amount for t in PaymentTransaction.search([
+                    ('state', 'in', ['authorized', 'posted', 'done']),
+                    ('gift_card', '=', self.id)
+                ])
+            ])
 
     @staticmethod
     def default_state():

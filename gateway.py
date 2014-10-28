@@ -68,43 +68,40 @@ class PaymentTransaction:
                 (Eval('method') == 'gift_card')
         )
 
-    def authorize_gift_card(self):
+    def validate_gift_card_amount(self, available_amount):
+        """
+        Validates that gift card has sufficient amount to pay
+        """
+        if self.method == 'gift_card' and available_amount < self.amount:
+            self.raise_user_error("insufficient_amount", self.gift_card.number)
+
+    def authorize_self(self):
         """
         Authorize using gift card for the specific transaction.
         """
-        if self.gift_card.amount_available >= self.amount:
-            self.state = 'authorized'
-            self.save()
+        self.validate_gift_card_amount(self.gift_card.amount_available)
 
-        else:
-            self.raise_user_error("insufficient_amount", self.gift_card.number)
+        return super(PaymentTransaction, self).authorize_self()
 
-    def capture_gift_card(self):
+    def capture_self(self):
         """
         Capture using gift card for the specific transaction.
         """
-        if self.gift_card.amount_available >= self.amount:
-            self.state = 'completed'
-            self.save()
-            self.safe_post()
+        self.validate_gift_card_amount(self.gift_card.amount_available)
 
-        else:
-            self.raise_user_error("insufficient_amount", self.gift_card.number)
+        return super(PaymentTransaction, self).capture_self()
 
-    def settle_gift_card(self):
+    def settle_self(self):
         """
         Settle using gift card for the specific transaction.
         """
-
-        amount_available = \
+        # Ignore authorized amount as settlement will be done for
+        # previously authorized amount
+        available_amount = \
             self.gift_card.amount - self.gift_card.amount_captured
-        if amount_available >= self.amount:
-            self.state = 'completed'
-            self.save()
-            self.safe_post()
+        self.validate_gift_card_amount(available_amount)
 
-        else:
-            self.raise_user_error("insufficient_amount", self.gift_card.number)
+        return super(PaymentTransaction, self).settle_self()
 
     @classmethod
     @ModelView.button
