@@ -95,6 +95,8 @@ class TestGiftCard(TestBase):
                 Configuration.create([{
                     'liability_account': self._get_account_by_kind('revenue').id
                 }])
+
+                gc_price, _, = gift_card_product.gift_card_prices
                 sale, = Sale.create([{
                     'reference': 'Sale1',
                     'sale_date': date.today(),
@@ -115,6 +117,7 @@ class TestGiftCard(TestBase):
                             'unit_price': 500,
                             'description': 'Gift Card',
                             'product': gift_card_product,
+                            'gc_price': gc_price,
                         }, {
                             'type': 'comment',
                             'description': 'Test line',
@@ -260,6 +263,8 @@ class TestGiftCard(TestBase):
 
             gift_card_product = self.create_product(is_gift_card=True)
 
+            gc_price, _, = gift_card_product.gift_card_prices
+
             with Transaction().set_context({'company': self.company.id}):
                 sale, = Sale.create([{
                     'reference': 'Sale1',
@@ -281,6 +286,7 @@ class TestGiftCard(TestBase):
                             'unit_price': 500,
                             'description': 'Test description2',
                             'product': gift_card_product,
+                            'gc_price': gc_price,
                         }])
                     ]
 
@@ -841,6 +847,7 @@ class TestGiftCard(TestBase):
                 Configuration.create([{
                     'liability_account': self._get_account_by_kind('revenue').id
                 }])
+                gc_price, _, = gift_card_product.gift_card_prices
                 sale, = Sale.create([{
                     'reference': 'Sale1',
                     'sale_date': date.today(),
@@ -863,6 +870,7 @@ class TestGiftCard(TestBase):
                             'product': gift_card_product,
                             'recipient_email': 'test@gift_card.com',
                             'recipient_name': 'John Doe',
+                            'gc_price': gc_price.id
                         }, {
                             'type': 'comment',
                             'description': 'Test line',
@@ -944,8 +952,10 @@ class TestGiftCard(TestBase):
 
             with Transaction().set_context({'company': self.company.id}):
                 gift_card_product = self.create_product(
-                    type='service', mode='virtual', is_gift_card=True
+                    type='service', mode='virtual', is_gift_card=True,
                 )
+
+                gc_price, _, = gift_card_product.gift_card_prices
 
                 sale, = Sale.create([{
                     'reference': 'Sale1',
@@ -969,6 +979,7 @@ class TestGiftCard(TestBase):
                             'product': gift_card_product,
                             'recipient_email': 'test@gift_card.com',
                             'recipient_name': 'John Doe',
+                            'gc_price': gc_price.id,
                         }, {
                             'type': 'comment',
                             'description': 'Test line',
@@ -1081,7 +1092,7 @@ class TestGiftCard(TestBase):
             )
 
             gc_template = gift_card_product.template
-            gc_template.allow_open_amount = False
+            gc_template.allow_open_amount = True
 
             with Transaction().set_context({'company': self.company.id}):
 
@@ -1133,7 +1144,7 @@ class TestGiftCard(TestBase):
             )
 
             gc_template = gift_card_product.template
-            gc_template.allow_open_amount = False
+            gc_template.allow_open_amount = True
 
             gc_template.gc_min = Decimal('100')
             gc_template.gc_max = Decimal('500')
@@ -1158,7 +1169,7 @@ class TestGiftCard(TestBase):
                             'description': 'Test description1',
                             'product': self.product.id,
                         }, {
-                            'quantity': 1,
+                            'quantity': 10,
                             'unit': self.uom,
                             'unit_price': 50,
                             'description': 'Gift Card',
@@ -1193,7 +1204,7 @@ class TestGiftCard(TestBase):
                             'description': 'Test description1',
                             'product': self.product.id,
                         }, {
-                            'quantity': 1,
+                            'quantity': 10,
                             'unit': self.uom,
                             'unit_price': 700,
                             'description': 'Gift Card',
@@ -1228,7 +1239,7 @@ class TestGiftCard(TestBase):
                             'description': 'Test description1',
                             'product': self.product.id,
                         }, {
-                            'quantity': 1,
+                            'quantity': 3,
                             'unit': self.uom,
                             'unit_price': 400,
                             'description': 'Gift Card',
@@ -1255,7 +1266,54 @@ class TestGiftCard(TestBase):
 
                 self.assertEqual(sale.state, 'processing')
 
-                self.assertEqual(len(gift_card_line.gift_cards), 1)
+                self.assertEqual(len(gift_card_line.gift_cards), 3)
+
+    def test0120_test_gift_card_prices(self):
+        """
+        Test gift card price
+        """
+        GiftCardPrice = POOL.get('product.template.gift_card.price')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            gift_card_product = self.create_product(
+                type='service', mode='virtual', is_gift_card=True
+            )
+
+            with self.assertRaises(UserError):
+                GiftCardPrice.create([{
+                    'template': gift_card_product.template,
+                    'price': -90
+                }])
+
+            price, = GiftCardPrice.create([{
+                'template': gift_card_product.template,
+                'price': 90
+            }])
+
+            self.assert_(price)
+
+    def test0130_test_on_change_gc_price(self):
+        """
+        Tests if unit price is changed with gift card price
+        """
+        SaleLine = POOL.get('sale.line')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            gift_card_product = self.create_product(
+                type='service', mode='virtual', is_gift_card=True
+            )
+
+            gc_price, _, = gift_card_product.gift_card_prices
+
+            sale_line = SaleLine(gc_price=gc_price)
+
+            result = sale_line.on_change_gc_price()
+
+            self.assertEqual(result['unit_price'], gc_price.price)
 
     def test0120_pay_manually(self):
         """

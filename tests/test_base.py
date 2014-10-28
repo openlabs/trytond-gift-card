@@ -191,7 +191,10 @@ class TestBase(unittest.TestCase):
 
         self.product = self.create_product()
 
-    def create_product(self, type='goods', mode='physical', is_gift_card=False):
+    def create_product(
+        self, type='goods', mode='physical', is_gift_card=False,
+        allow_open_amount=False
+    ):
         """
         Create default product
         """
@@ -218,6 +221,17 @@ class TestBase(unittest.TestCase):
                 'is_gift_card': True,
                 'gift_card_delivery_mode': mode,
             })
+
+            if not allow_open_amount:
+                values.update({
+                    'gift_card_prices': [
+                        ('create', [{
+                            'price': 500,
+                        }, {
+                            'price': 600,
+                        }])
+                    ]
+                })
 
         return Template.create([values])[0].products[0]
 

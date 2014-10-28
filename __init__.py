@@ -10,13 +10,14 @@ from .gift_card import GiftCard, GiftCardReport
 from sale import SaleLine, Sale
 from configuration import Configuration
 from gateway import PaymentGateway, PaymentTransaction
-from product import Template
+from product import Template, GiftCardPrice
 
 
 def register():
     Pool.register(
         Configuration,
         GiftCard,
+        GiftCardPrice,
         SaleLine,
         Sale,
         PaymentGateway,
