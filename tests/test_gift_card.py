@@ -1257,6 +1257,54 @@ class TestGiftCard(TestBase):
 
                 self.assertEqual(len(gift_card_line.gift_cards), 1)
 
+    def test0120_pay_manually(self):
+        """
+        Check authorized, captured and available amount for manual method
+        """
+        PaymentTransaction = POOL.get('payment_gateway.transaction')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                gateway = self.create_payment_gateway(method='manual')
+
+                # Authorise Payment transaction
+                payment_transaction = PaymentTransaction(
+                    description="Payment Transaction 1",
+                    party=self.party1.id,
+                    address=self.party1.addresses[0].id,
+                    amount=Decimal('70'),
+                    currency=self.company.currency.id,
+                    gateway=gateway.id,
+                )
+                payment_transaction.save()
+
+                PaymentTransaction.authorize([payment_transaction])
+
+                self.assertEqual(payment_transaction.state, 'authorized')
+
+                # Settle Payment transactions
+                PaymentTransaction.settle([payment_transaction])
+
+                self.assertEqual(payment_transaction.state, 'posted')
+
+                # Capture Payment transactions
+                payment_transaction = PaymentTransaction(
+                    description="Payment Transaction 1",
+                    party=self.party1.id,
+                    address=self.party1.addresses[0].id,
+                    amount=Decimal('70'),
+                    currency=self.company.currency.id,
+                    gateway=gateway.id,
+                )
+                payment_transaction.save()
+
+                PaymentTransaction.capture([payment_transaction])
+
+                self.assertEqual(payment_transaction.state, 'posted')
+
 
 def suite():
     """
