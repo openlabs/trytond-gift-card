@@ -221,7 +221,7 @@ class TestBase(unittest.TestCase):
 
         return Template.create([values])[0].products[0]
 
-    def create_payment_gateway(self, provider='gift_card'):
+    def create_payment_gateway(self, method='gift_card'):
         """
         Create payment gateway
         """
@@ -251,12 +251,11 @@ class TestBase(unittest.TestCase):
             'sequence': sequence.id,
         }])
 
-        if provider == 'gift_card':
-            gateway = PaymentGateway(
-                name='Gift Card',
-                journal=self.cash_journal,
-                provider='self',
-                method='gift_card',
-            )
-            gateway.save()
-            return gateway
+        gateway = PaymentGateway(
+            name='Gift Card',
+            journal=self.cash_journal,
+            provider='self',
+            method=method,
+        )
+        gateway.save()
+        return gateway

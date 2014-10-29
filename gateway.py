@@ -72,14 +72,15 @@ class PaymentTransaction:
         """
         Validates that gift card has sufficient amount to pay
         """
-        if self.method == 'gift_card' and available_amount < self.amount:
+        if available_amount < self.amount:
             self.raise_user_error("insufficient_amount", self.gift_card.number)
 
     def authorize_self(self):
         """
         Authorize using gift card for the specific transaction.
         """
-        self.validate_gift_card_amount(self.gift_card.amount_available)
+        if self.method == 'gift_card':
+            self.validate_gift_card_amount(self.gift_card.amount_available)
 
         return super(PaymentTransaction, self).authorize_self()
 
@@ -87,7 +88,8 @@ class PaymentTransaction:
         """
         Capture using gift card for the specific transaction.
         """
-        self.validate_gift_card_amount(self.gift_card.amount_available)
+        if self.method == 'gift_card':
+            self.validate_gift_card_amount(self.gift_card.amount_available)
 
         return super(PaymentTransaction, self).capture_self()
 
@@ -95,11 +97,12 @@ class PaymentTransaction:
         """
         Settle using gift card for the specific transaction.
         """
-        # Ignore authorized amount as settlement will be done for
-        # previously authorized amount
-        available_amount = \
-            self.gift_card.amount - self.gift_card.amount_captured
-        self.validate_gift_card_amount(available_amount)
+        if self.method == 'gift_card':
+            # Ignore authorized amount as settlement will be done for
+            # previously authorized amount
+            available_amount = \
+                self.gift_card.amount - self.gift_card.amount_captured
+            self.validate_gift_card_amount(available_amount)
 
         return super(PaymentTransaction, self).settle_self()
 
