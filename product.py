@@ -5,11 +5,11 @@
     :copyright: (c) 2014 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
-from trytond.model import fields
+from trytond.model import fields, ModelSQL, ModelView
 from trytond.pool import PoolMeta
 from trytond.pyson import Bool, Eval
 
-__all__ = ['Template']
+__all__ = ['Template', 'GiftCardPrice']
 __metaclass__ = PoolMeta
 
 
@@ -35,16 +35,31 @@ class Template:
     )
     gc_min = fields.Numeric(
         "Gift Card Minimum Amount", states={
-            'invisible': Bool(Eval('allow_open_amount')),
-            'required': ~Bool(Eval('allow_open_amount')),
+            'invisible': ~Bool(Eval('allow_open_amount')),
+            'required': Bool(Eval('allow_open_amount')),
         }, depends=['allow_open_amount']
     )
 
     gc_max = fields.Numeric(
         "Gift Card Maximum Amount", states={
-            'invisible': Bool(Eval('allow_open_amount')),
-            'required': ~Bool(Eval('allow_open_amount')),
+            'invisible': ~Bool(Eval('allow_open_amount')),
+            'required': Bool(Eval('allow_open_amount')),
         }, depends=['allow_open_amount']
+    )
+
+    gift_card_prices = fields.One2Many(
+        'product.template.gift_card.price', 'template', 'Gift Card Prices',
+        states={
+            'invisible': ~(
+                ~Bool(Eval('allow_open_amount')) &
+                Bool(Eval('is_gift_card'))
+            ),
+            'required': (
+                ~Bool(Eval('allow_open_amount')) &
+                Bool(Eval('is_gift_card'))
+            ),
+        }, depends=['allow_open_amount', 'is_gift_card']
+
     )
 
     @staticmethod
@@ -57,7 +72,7 @@ class Template:
 
     @staticmethod
     def default_allow_open_amount():
-        return True
+        return False
 
     @classmethod
     def __setup__(cls):
@@ -89,7 +104,7 @@ class Template:
         """
         Check minimum amount to be smaller than maximum amount
         """
-        if self.allow_open_amount:
+        if not self.allow_open_amount:
             return
 
         if self.gc_min < 0 or self.gc_max < 0:
@@ -119,3 +134,40 @@ class Template:
                     self.rec_name, self.gift_card_delivery_mode
                 )
             )
+
+
+class GiftCardPrice(ModelSQL, ModelView):
+    "Gift Card Price"
+    __name__ = 'product.template.gift_card.price'
+    _rec_name = 'price'
+
+    template = fields.Many2One(
+        "product.template", "Product Template", required=True, select=True
+    )
+
+    price = fields.Numeric("Price", required=True)
+
+    @classmethod
+    def __setup__(cls):
+        super(GiftCardPrice, cls).__setup__()
+
+        cls._error_messages.update({
+            'negative_amount': 'Price can not be negative'
+        })
+
+    @classmethod
+    def validate(cls, prices):
+        """
+        Validate product price for gift card
+        """
+        super(GiftCardPrice, cls).validate(prices)
+
+        for price in prices:
+            price.check_price()
+
+    def check_price(self):
+        """
+        Price can not be negative
+        """
+        if self.price < 0:
+            self.raise_user_error("negative_amount")

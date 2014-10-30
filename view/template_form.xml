@@ -14,6 +14,8 @@
               <field name="gc_min" />
               <label name="gc_max" />
               <field name="gc_max" />
+              <newline/>
+              <field name="gift_card_prices" colspan="4"/>
           </page>
       </xpath>
 </data>

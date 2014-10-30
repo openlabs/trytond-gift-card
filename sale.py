@@ -64,10 +64,44 @@ class SaleLine:
             ),
         }, depends=['gift_card_delivery_mode', 'is_gift_card']
     )
+    allow_open_amount = fields.Function(
+        fields.Boolean("Allow Open Amount?", states={
+            'invisible': ~Bool(Eval('is_gift_card'))
+        }, depends=['is_gift_card']), 'on_change_with_allow_open_amount'
+    )
+
+    gc_price = fields.Many2One(
+        'product.template.gift_card.price', "Gift Card Price", states={
+            'required': (
+                ~Bool(Eval('allow_open_amount')) & Bool(Eval('is_gift_card'))
+            ),
+            'invisible': ~(
+                ~Bool(Eval('allow_open_amount')) & Bool(Eval('is_gift_card'))
+            )
+        }, depends=['allow_open_amount', 'is_gift_card', 'product'], domain=[
+            ('template.products', '=', Eval('product'))
+        ]
+    )
+
+    @fields.depends('product')
+    def on_change_with_allow_open_amount(self, name=None):
+        if self.product:
+            return self.product.template.allow_open_amount
+
+    @fields.depends('gc_price', 'unit_price')
+    def on_change_gc_price(self, name=None):
+        res = {}
+        if self.gc_price:
+            res['unit_price'] = self.gc_price.price
+        return res
 
     @classmethod
     def __setup__(cls):
         super(SaleLine, cls).__setup__()
+
+        cls.unit_price.states['readonly'] = (
+            ~Bool(Eval('allow_open_amount')) & Bool(Eval('is_gift_card'))
+        )
 
         cls._error_messages.update({
             'amounts_out_of_range':
@@ -165,8 +199,8 @@ class SaleLine:
 
         template = self.product.template
 
-        if not template.allow_open_amount and not (
-            template.gc_min < self.amount < template.gc_max
+        if template.allow_open_amount and not (
+            template.gc_min < self.unit_price < template.gc_max
         ):
             self.raise_user_error(
                 "amounts_out_of_range", (
@@ -176,7 +210,7 @@ class SaleLine:
             )
 
         gift_cards = GiftCard.create([{
-            'amount': self.amount,
+            'amount': self.unit_price,
             'sale_line': self.id,
             'message': self.message,
             'recipient_email': self.recipient_email,

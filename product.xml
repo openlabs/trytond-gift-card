@@ -7,5 +7,11 @@
             <field name="name">template_form</field>
           </record>
 
+          <record model="ir.ui.view" id="gift_card_price_view_form">
+            <field name="model">product.template.gift_card.price</field>
+            <field name="type">tree</field>
+            <field name="name">gift_card_price_tree</field>
+          </record>
+
     </data>
 </tryton>
