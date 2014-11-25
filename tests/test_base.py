@@ -209,21 +209,19 @@ class TestBase(unittest.TestCase):
             'salable': True,
             'sale_uom': self.uom.id,
             'account_revenue': self.account_revenue.id,
-            'products': [
-                ('create', [{
-                    'code': 'Test Product'
-                }])
-            ]
+        }
+        product_values = {
+            'code': 'Test Product'
         }
 
         if is_gift_card:
-            values.update({
+            product_values.update({
                 'is_gift_card': True,
-                'gift_card_delivery_mode': mode,
+                'gift_card_delivery_mode': mode
             })
 
             if not allow_open_amount:
-                values.update({
+                product_values.update({
                     'gift_card_prices': [
                         ('create', [{
                             'price': 500,
@@ -232,6 +230,12 @@ class TestBase(unittest.TestCase):
                         }])
                     ]
                 })
+
+        values.update({
+            'products': [
+                ('create', [product_values])
+            ]
+        })
 
         return Template.create([values])[0].products[0]
 
