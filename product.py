@@ -9,13 +9,13 @@ from trytond.model import fields, ModelSQL, ModelView
 from trytond.pool import PoolMeta
 from trytond.pyson import Bool, Eval
 
-__all__ = ['Template', 'GiftCardPrice']
+__all__ = ['Product', 'GiftCardPrice']
 __metaclass__ = PoolMeta
 
 
-class Template:
-    "Product Template"
-    __name__ = 'product.template'
+class Product:
+    "Product"
+    __name__ = 'product.product'
 
     is_gift_card = fields.Boolean("Is Gift Card ?")
 
@@ -48,7 +48,7 @@ class Template:
     )
 
     gift_card_prices = fields.One2Many(
-        'product.template.gift_card.price', 'template', 'Gift Card Prices',
+        'product.product.gift_card.price', 'product', 'Gift Card Prices',
         states={
             'invisible': ~(
                 ~Bool(Eval('allow_open_amount')) &
@@ -76,7 +76,7 @@ class Template:
 
     @classmethod
     def __setup__(cls):
-        super(Template, cls).__setup__()
+        super(Product, cls).__setup__()
 
         cls._error_messages.update({
             'inappropriate_product':
@@ -93,7 +93,7 @@ class Template:
         """
         Validates each product template
         """
-        super(Template, cls).validate(templates)
+        super(Product, cls).validate(templates)
 
         for template in templates:
             template.check_type_and_mode()
@@ -138,11 +138,11 @@ class Template:
 
 class GiftCardPrice(ModelSQL, ModelView):
     "Gift Card Price"
-    __name__ = 'product.template.gift_card.price'
+    __name__ = 'product.product.gift_card.price'
     _rec_name = 'price'
 
-    template = fields.Many2One(
-        "product.template", "Product Template", required=True, select=True
+    product = fields.Many2One(
+        "product.product", "Product", required=True, select=True
     )
 
     price = fields.Numeric("Price", required=True)

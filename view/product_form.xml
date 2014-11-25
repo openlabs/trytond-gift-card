@@ -1,11 +1,9 @@
 <data>
       <xpath expr="//field[@name='active']" position="after">
-        <label name="is_gift_card" />
-        <field name="is_gift_card" />
-        <newline />
-      </xpath>
-      <xpath expr="//notebook" position="inside">
-          <page id="gift_card_info" string="Gift Cards Information" states="{'invisible': ~Bool(Eval('is_gift_card'))}">
+          <label name="is_gift_card" />
+          <field name="is_gift_card" />
+          <newline />
+          <group id="gift_card_info" string="Gift Cards Information" states="{'invisible': ~Bool(Eval('is_gift_card'))}" colspan="4">
               <label name="gift_card_delivery_mode" />
               <field name="gift_card_delivery_mode" />
               <label name="allow_open_amount" />
@@ -16,6 +14,6 @@
               <field name="gc_max" />
               <newline/>
               <field name="gift_card_prices" colspan="4"/>
-          </page>
+          </group>
       </xpath>
 </data>

@@ -71,7 +71,7 @@ class SaleLine:
     )
 
     gc_price = fields.Many2One(
-        'product.template.gift_card.price', "Gift Card Price", states={
+        'product.product.gift_card.price', "Gift Card Price", states={
             'required': (
                 ~Bool(Eval('allow_open_amount')) & Bool(Eval('is_gift_card'))
             ),
@@ -79,14 +79,14 @@ class SaleLine:
                 ~Bool(Eval('allow_open_amount')) & Bool(Eval('is_gift_card'))
             )
         }, depends=['allow_open_amount', 'is_gift_card', 'product'], domain=[
-            ('template.products', '=', Eval('product'))
+            ('product', '=', Eval('product'))
         ]
     )
 
     @fields.depends('product')
     def on_change_with_allow_open_amount(self, name=None):
         if self.product:
-            return self.product.template.allow_open_amount
+            return self.product.allow_open_amount
 
     @fields.depends('gc_price', 'unit_price')
     def on_change_gc_price(self, name=None):
@@ -116,7 +116,7 @@ class SaleLine:
         if not (self.product and self.is_gift_card):
             return None
 
-        return self.product.template.gift_card_delivery_mode
+        return self.product.gift_card_delivery_mode
 
     @classmethod
     def copy(cls, lines, default=None):
@@ -130,7 +130,7 @@ class SaleLine:
         """
         Returns boolean value to tell if product is gift card or not
         """
-        return self.product and self.product.template.is_gift_card
+        return self.product and self.product.is_gift_card
 
     def get_invoice_line(self, invoice_type):
         """
@@ -197,15 +197,15 @@ class SaleLine:
             # Cards already created
             return None
 
-        template = self.product.template
+        product = self.product
 
-        if template.allow_open_amount and not (
-            template.gc_min < self.unit_price < template.gc_max
+        if product.allow_open_amount and not (
+            product.gc_min < self.unit_price < product.gc_max
         ):
             self.raise_user_error(
                 "amounts_out_of_range", (
-                    self.sale.currency.code, template.gc_min,
-                    self.sale.currency.code, template.gc_max
+                    self.sale.currency.code, product.gc_min,
+                    self.sale.currency.code, product.gc_max
                 )
             )
 

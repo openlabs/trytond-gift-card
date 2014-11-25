@@ -1091,37 +1091,36 @@ class TestGiftCard(TestBase):
                 type='service', mode='virtual', is_gift_card=True
             )
 
-            gc_template = gift_card_product.template
-            gc_template.allow_open_amount = True
+            gift_card_product.allow_open_amount = True
 
             with Transaction().set_context({'company': self.company.id}):
 
                 # gc_min > gc_max
-                gc_template.gc_min = Decimal('70')
-                gc_template.gc_max = Decimal('60')
+                gift_card_product.gc_min = Decimal('70')
+                gift_card_product.gc_max = Decimal('60')
 
                 with self.assertRaises(UserError):
-                    gc_template.save()
+                    gift_card_product.save()
 
                 # gc_min as negative
-                gc_template.gc_min = Decimal('-10')
-                gc_template.gc_max = Decimal('60')
+                gift_card_product.gc_min = Decimal('-10')
+                gift_card_product.gc_max = Decimal('60')
 
                 with self.assertRaises(UserError):
-                    gc_template.save()
+                    gift_card_product.save()
 
                 # gc_max as negative
-                gc_template.gc_min = Decimal('10')
-                gc_template.gc_max = Decimal('-80')
+                gift_card_product.gc_min = Decimal('10')
+                gift_card_product.gc_max = Decimal('-80')
 
                 with self.assertRaises(UserError):
-                    gc_template.save()
+                    gift_card_product.save()
 
                 # gc_min < gc_max
-                gc_template.gc_min = Decimal('70')
-                gc_template.gc_max = Decimal('100')
+                gift_card_product.gc_min = Decimal('70')
+                gift_card_product.gc_max = Decimal('100')
 
-                gc_template.save()
+                gift_card_product.save()
 
     def test0118_validate_gc_amount_on_sale_line(self):
         """
@@ -1143,13 +1142,12 @@ class TestGiftCard(TestBase):
                 type='goods', mode='physical', is_gift_card=True
             )
 
-            gc_template = gift_card_product.template
-            gc_template.allow_open_amount = True
+            gift_card_product.allow_open_amount = True
 
-            gc_template.gc_min = Decimal('100')
-            gc_template.gc_max = Decimal('500')
+            gift_card_product.gc_min = Decimal('100')
+            gift_card_product.gc_max = Decimal('500')
 
-            gc_template.save()
+            gift_card_product.save()
 
             with Transaction().set_context({'company': self.company.id}):
 
@@ -1272,7 +1270,7 @@ class TestGiftCard(TestBase):
         """
         Test gift card price
         """
-        GiftCardPrice = POOL.get('product.template.gift_card.price')
+        GiftCardPrice = POOL.get('product.product.gift_card.price')
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             self.setup_defaults()
@@ -1283,12 +1281,12 @@ class TestGiftCard(TestBase):
 
             with self.assertRaises(UserError):
                 GiftCardPrice.create([{
-                    'template': gift_card_product.template,
+                    'product': gift_card_product,
                     'price': -90
                 }])
 
             price, = GiftCardPrice.create([{
-                'template': gift_card_product.template,
+                'product': gift_card_product,
                 'price': 90
             }])
 
