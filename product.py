@@ -7,7 +7,6 @@
 """
 from trytond.model import fields, ModelSQL, ModelView
 from trytond.pool import PoolMeta
-from trytond.pyson import Bool, Eval
 
 __all__ = ['Product', 'GiftCardPrice']
 __metaclass__ = PoolMeta
@@ -23,43 +22,15 @@ class Product:
         ('virtual', 'Virtual'),
         ('physical', 'Physical'),
         ('combined', 'Combined'),
-    ], 'Gift Card Delivery Mode', states={
-        'invisible': ~Bool(Eval('is_gift_card')),
-        'required': Bool(Eval('is_gift_card')),
-    }, depends=['is_gift_card'])
+    ], 'Gift Card Delivery Mode')
 
-    allow_open_amount = fields.Boolean(
-        "Allow Open Amount ?", states={
-            'invisible': ~Bool(Eval('is_gift_card')),
-        }, depends=['is_gift_card']
-    )
-    gc_min = fields.Numeric(
-        "Gift Card Minimum Amount", states={
-            'invisible': ~Bool(Eval('allow_open_amount')),
-            'required': Bool(Eval('allow_open_amount')),
-        }, depends=['allow_open_amount']
-    )
+    allow_open_amount = fields.Boolean("Allow Open Amount ?")
+    gc_min = fields.Numeric("Gift Card Minimum Amount")
 
-    gc_max = fields.Numeric(
-        "Gift Card Maximum Amount", states={
-            'invisible': ~Bool(Eval('allow_open_amount')),
-            'required': Bool(Eval('allow_open_amount')),
-        }, depends=['allow_open_amount']
-    )
+    gc_max = fields.Numeric("Gift Card Maximum Amount")
 
     gift_card_prices = fields.One2Many(
         'product.product.gift_card.price', 'product', 'Gift Card Prices',
-        states={
-            'invisible': ~(
-                ~Bool(Eval('allow_open_amount')) &
-                Bool(Eval('is_gift_card'))
-            ),
-            'required': (
-                ~Bool(Eval('allow_open_amount')) &
-                Bool(Eval('is_gift_card'))
-            ),
-        }, depends=['allow_open_amount', 'is_gift_card']
-
     )
 
     @staticmethod
