@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+
+<tree string="Gift Card Prices">
+    <field name="price"/>
+</tree>

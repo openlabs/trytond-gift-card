@@ -1,5 +1,61 @@
 <?xml version="1.0"?>
 <tryton>
     <data>
+
+        <record model="ir.ui.view" id="gift_card_form_view">
+            <field name="model">gift_card.gift_card</field>
+            <field name="type">form</field>
+            <field name="name">gift_card_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="gift_card_tree_view">
+            <field name="model">gift_card.gift_card</field>
+            <field name="type">tree</field>
+            <field name="name">gift_card_tree</field>
+        </record>
+
+        <record model="ir.action.act_window" id="act_gift_card">
+            <field name="name">Gift Card</field>
+            <field name="res_model">gift_card.gift_card</field>
+            <field name="search_value"></field>
+        </record>
+        <record model="ir.action.act_window.view" id="act_gift_card_view1">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="gift_card_form_view"/>
+            <field name="act_window" ref="act_gift_card"/>
+        </record>
+        <record model="ir.action.act_window.view" id="act_gift_card_view2">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="gift_card_tree_view"/>
+            <field name="act_window" ref="act_gift_card"/>
+        </record>
+
+        <menuitem parent="gift_card_main_menu" action="act_gift_card" id="gift_card_menu"
+          sequence="10"/>
+
+        <record model="ir.action.report" id="report_gift_card">
+            <field name="name">Gift Card</field>
+            <field name="model">gift_card.gift_card</field>
+            <field name="report_name">gift_card.gift_card</field>
+            <field name="report">gift_card/gift_card.odt</field>
+        </record>
+
+        <record model="ir.action.keyword" id="print_keyword">
+            <field name="keyword">form_print</field>
+            <field name="model">gift_card.gift_card,-1</field>
+            <field name="action" ref="report_gift_card"/>
+        </record>
+
+        <record model="ir.action.act_window" id="act_sales">
+            <field name="name">Sales</field>
+            <field name="res_model">sale.sale</field>
+            <field name="domain">[('lines.gift_cards', 'in', Eval('active_ids'))]</field>
+        </record>
+        <record model="ir.action.keyword" id="act_open_sale_keyword1">
+            <field name="keyword">form_relate</field>
+            <field name="model">gift_card.gift_card,-1</field>
+            <field name="action" ref="act_sales"/>
+        </record>
+
     </data>
 </tryton>

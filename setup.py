@@ -80,9 +80,14 @@ major_version, minor_version, _ = info.get('version', '0.0.1').split('.', 2)
 major_version = int(major_version)
 minor_version = int(minor_version)
 
-requires = []
+requires = [
+    'num2words'
+]
 
-MODULE2PREFIX = {}
+MODULE2PREFIX = {
+    'sale_payment_gateway': 'openlabs',
+    'email_queue': 'openlabs',
+}
 
 MODULE = "gift_card"
 PREFIX = "openlabs"
@@ -116,7 +121,7 @@ setup(
         'trytond.modules.%s' % MODULE: info.get('xml', [])
         + info.get('translation', [])
         + ['tryton.cfg', 'locale/*.po', 'tests/*.rst', 'reports/*.odt']
-        + ['view/*.xml'],
+        + ['view/*.xml', '*.odt', 'emails/*.html'],
     },
     classifiers=[
         'Development Status :: 4 - Beta',

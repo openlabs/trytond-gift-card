@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tryton>
+    <data>
+
+          <record model="ir.ui.view" id="template_view_form">
+            <field name="model">product.product</field>
+            <field name="inherit" ref="product.product_view_form" />
+            <field name="name">product_form</field>
+          </record>
+
+          <record model="ir.ui.view" id="gift_card_price_view_form">
+            <field name="model">product.product.gift_card.price</field>
+            <field name="type">tree</field>
+            <field name="name">gift_card_price_tree</field>
+          </record>
+
+    </data>
+</tryton>

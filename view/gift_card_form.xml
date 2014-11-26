@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<form string="Gift Card">
+    <label name="number"/>
+    <field name="number"/>
+    <label name="amount"/>
+    <field name="amount"/>
+    <newline/>
+    <notebook>
+       <page id="general" string="General">
+           <label name="currency"/>
+           <field name="currency"/>
+           <label name="sale"/>
+           <field name="sale"/>
+           <newline/>
+           <separator id="recipient_details" string="Recipient Details" colspan="4"/>
+           <label name="recipient_email"/>
+           <field name="recipient_email"/>
+           <label name="recipient_name"/>
+           <field name="recipient_name"/>
+       </page>
+       <page string="Payment Transactions" id="transactions">
+           <field name="payment_transactions"/>
+       </page>
+       <page string="Amounts" id="amounts">
+            <label name="amount_authorized"/>
+            <field name="amount_authorized"/>
+            <label name="amount_captured"/>
+            <field name="amount_captured"/>
+            <label name="amount_available"/>
+            <field name="amount_available"/>
+        </page>
+        <page name="message">
+            <field name="message"/>
+        </page>
+    </notebook>
+    <label name="state"/>
+    <field name="state"/>
+    <group col="3" colspan="2" id="buttons">
+        <button name="draft" string="Draft" icon="tryton-go-previous"/>
+        <button name="activate" string="Activate" icon="tryton-go-next"/>
+        <!--Hide button temporary as it may not be needed-->
+        <!--<button name="cancel" string="Cancel" icon="tryton-cancel"/>-->
+    </group>
+</form>

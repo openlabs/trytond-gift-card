@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<tryton>
+    <data>
+        <record model="ir.ui.view" id="transaction_view_form">
+            <field name="model">payment_gateway.transaction</field>
+            <field name="inherit" ref="payment_gateway.transaction_view_form"/>
+            <field name="name">transaction_form</field>
+        </record>
+
+    </data>
+</tryton>
