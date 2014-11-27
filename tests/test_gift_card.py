@@ -1221,7 +1221,7 @@ class TestGiftCard(TestBase):
                 with self.assertRaises(UserError):
                     Sale.process([sale])
 
-                # gc_max < gift card line amount > gc_min
+                # gc_min <= gift card line amount <= gc_max
                 sale, = Sale.create([{
                     'reference': 'Sale1',
                     'sale_date': date.today(),
@@ -1239,7 +1239,7 @@ class TestGiftCard(TestBase):
                         }, {
                             'quantity': 3,
                             'unit': self.uom,
-                            'unit_price': 400,
+                            'unit_price': 500,
                             'description': 'Gift Card',
                             'product': gift_card_product,
                         }, {
