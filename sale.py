@@ -200,7 +200,7 @@ class SaleLine:
         product = self.product
 
         if product.allow_open_amount and not (
-            product.gc_min < self.unit_price < product.gc_max
+            product.gc_min <= self.unit_price <= product.gc_max
         ):
             self.raise_user_error(
                 "amounts_out_of_range", (
