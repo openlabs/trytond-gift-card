@@ -257,6 +257,26 @@ class GiftCard(Workflow, ModelSQL, ModelView):
 
         return super(GiftCard, cls).delete(gift_cards)
 
+    def _get_subject_for_email(self):
+        """
+        Returns the text to use as subject of email
+        """
+        return "Gift Card - %s" % self.number
+
+    def _get_email_templates(self):
+        """
+        Returns a tuple of the form:
+
+        (html_template, text_template)
+        """
+        env = Environment(loader=PackageLoader(
+            'trytond.modules.gift_card', 'emails'
+        ))
+        return (
+            env.get_template('gift_card_html.html'),
+            env.get_template('gift_card_text.html')
+        )
+
     def send_gift_card_as_email(self):
         """
         Send gift card as an attachment in the email
@@ -267,17 +287,26 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         if not self.recipient_email:  # pragma: no cover
             return
 
-        env = Environment(loader=PackageLoader(
-            'trytond.modules.gift_card', 'emails'
-        ))
+        # Try to generate report twice
+        # This is needed as sometimes `unoconv` fails to convert report to pdf
+        for try_count in range(2):
+            try:
+                val = GiftCardReport.execute([self.id], {})
+                break
+            except:  # pragma: no cover
+                if try_count == 0:
+                    continue
+                else:
+                    return
 
-        val = GiftCardReport.execute([self.id], {})
+        subject = self._get_subject_for_email()
+        html_template, text_template = self._get_email_templates()
 
         email_gift_card = render_email(
             CONFIG['smtp_from'], self.recipient_email,
-            "Gift Card - %s" % self.number,
-            html_template=env.get_template('gift_card_html.html'),
-            text_template=env.get_template('gift_card_text.html'),
+            subject,
+            html_template=html_template,
+            text_template=text_template,
             attachments={"%s.%s" % (val[3], val[0]): val[1]},
             card=self,
         )
