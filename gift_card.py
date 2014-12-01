@@ -102,6 +102,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     )
 
     is_email_sent = fields.Boolean("Is Email Sent ?", readonly=True)
+    comment = fields.Text('Comment')
 
     def get_sale(self, name):
         """
@@ -243,7 +244,10 @@ class GiftCard(Workflow, ModelSQL, ModelView):
 
     @classmethod
     def get_origin(cls):
-        return [(None, '')]
+        return [
+            (None, ''),
+            ('sale.sale', 'Sale'),
+        ]
 
     @classmethod
     def delete(cls, gift_cards):
