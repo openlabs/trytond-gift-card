@@ -4,6 +4,8 @@
     <field name="number"/>
     <label name="amount"/>
     <field name="amount"/>
+    <label name="origin"/>
+    <field name="origin"/>
     <newline/>
     <notebook>
        <page id="general" string="General">

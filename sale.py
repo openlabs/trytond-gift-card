@@ -215,6 +215,7 @@ class SaleLine:
             'message': self.message,
             'recipient_email': self.recipient_email,
             'recipient_name': self.recipient_name,
+            'origin': '%s,%d' % (self.sale.__name__, self.sale.id),
         } for each in range(0, int(self.quantity))])
 
         # TODO: have option of creating card after invoice is paid ?

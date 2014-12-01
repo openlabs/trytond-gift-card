@@ -244,7 +244,10 @@ class GiftCard(Workflow, ModelSQL, ModelView):
 
     @classmethod
     def get_origin(cls):
-        return [(None, '')]
+        return [
+            (None, ''),
+            ('sale.sale', 'Sale'),
+        ]
 
     @classmethod
     def delete(cls, gift_cards):
