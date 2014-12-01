@@ -102,6 +102,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
     )
 
     is_email_sent = fields.Boolean("Is Email Sent ?", readonly=True)
+    comment = fields.Text('Comment')
 
     def get_sale(self, name):
         """

@@ -32,6 +32,9 @@
         <page name="message">
             <field name="message"/>
         </page>
+        <page name="comment">
+            <field name="comment" colspan="4"/>
+        </page>
     </notebook>
     <label name="state"/>
     <field name="state"/>
