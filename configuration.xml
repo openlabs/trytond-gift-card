@@ -31,7 +31,6 @@
         <record model="ir.sequence" id="sequence_number">
             <field name="name">Gift Card Number</field>
             <field name="code">gift_card.gift_card</field>
-            <field name="type">decimal timestamp</field>
         </record>
 
         <record model="ir.sequence.type-res.group" id="sequence_type_number_sequence_group_admin">
