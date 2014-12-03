@@ -58,10 +58,6 @@ class SaleLine:
                 Bool(Eval('is_gift_card')) &
                 (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
             ),
-            'required': (
-                Bool(Eval('is_gift_card')) &
-                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
-            ),
         }, depends=['gift_card_delivery_mode', 'is_gift_card']
     )
     allow_open_amount = fields.Function(
