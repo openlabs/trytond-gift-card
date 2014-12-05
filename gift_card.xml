@@ -57,5 +57,9 @@
             <field name="action" ref="act_sales"/>
         </record>
 
+        <record id="gift_card_email_receivers" model="res.group">
+            <field name="name">Gift Card E-mail Receivers</field>
+        </record>
+
     </data>
 </tryton>
