@@ -287,6 +287,16 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         """
         EmailQueue = Pool().get('email.queue')
         GiftCardReport = Pool().get('gift_card.gift_card', type='report')
+        ModelData = Pool().get('ir.model.data')
+        Group = Pool().get('res.group')
+
+        group_id = ModelData.get_id(
+            "gift_card", "gift_card_email_receivers"
+        )
+        bcc_emails = map(
+            lambda user: user.email,
+            filter(lambda user: user.email, Group(group_id).users)
+        )
 
         if not self.recipient_email:  # pragma: no cover
             return
@@ -316,7 +326,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         )
 
         EmailQueue.queue_mail(
-            CONFIG['smtp_from'], self.recipient_email,
+            CONFIG['smtp_from'], [self.recipient_email] + bcc_emails,
             email_gift_card.as_string()
         )
         self.is_email_sent = True
