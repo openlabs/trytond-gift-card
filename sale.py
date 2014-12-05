@@ -8,7 +8,6 @@
 from trytond.model import fields, ModelView
 from trytond.pool import PoolMeta, Pool
 from trytond.pyson import Eval, Bool
-from trytond.transaction import Transaction
 
 __all__ = ['SaleLine', 'Sale']
 __metaclass__ = PoolMeta
@@ -133,36 +132,22 @@ class SaleLine:
         Pick up liability account from gift card configuration for invoices
         """
         GiftCardConfiguration = Pool().get('gift_card.configuration')
-        InvoiceLine = Pool().get('account.invoice.line')
 
-        if (not self.is_gift_card) or (invoice_type != 'out_invoice'):
-            # 1. If not gift card, return value by super function
-            # 2. We bill gift cards only when they are sold.
-            #    Returning gift cards are bad for business ;-)
-            return super(SaleLine, self).get_invoice_line(invoice_type)
+        lines = super(SaleLine, self).get_invoice_line(invoice_type)
 
-        if self.invoice_lines:      # pragma: no cover
-            # already invoiced
-            return []
+        if lines and self.is_gift_card:
+            liability_account = GiftCardConfiguration(1).liability_account
 
-        with Transaction().set_user(0, set_context=True):
-            invoice_line = InvoiceLine()
+            if not liability_account:
+                self.raise_user_error(
+                    "Liability Account is missing from Gift Card "
+                    "Configuration"
+                )
 
-        invoice_line.type = self.type
-        invoice_line.description = self.description
-        invoice_line.note = self.note
-        invoice_line.origin = self
-        invoice_line.account = GiftCardConfiguration(1).liability_account
-        invoice_line.unit_price = self.unit_price
-        invoice_line.quantity = self.quantity
+            for invoice_line in lines:
+                invoice_line.account = liability_account
 
-        if not invoice_line.account:
-            self.raise_user_error(
-                "Liability Account is missing from Gift Card "
-                "Configuration"
-            )
-
-        return [invoice_line]
+        return lines
 
     @fields.depends('is_gift_card')
     def on_change_is_gift_card(self):

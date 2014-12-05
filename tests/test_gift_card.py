@@ -81,6 +81,7 @@ class TestGiftCard(TestBase):
         Sale = POOL.get('sale.sale')
         GiftCard = POOL.get('gift_card.gift_card')
         Invoice = POOL.get('account.invoice')
+        InvoiceLine = POOL.get('account.invoice.line')
         Configuration = POOL.get('gift_card.configuration')
         SaleLine = POOL.get('sale.line')
 
@@ -191,6 +192,14 @@ class TestGiftCard(TestBase):
                 ])
 
                 invoice, = Invoice.search([])
+                line, = InvoiceLine.search([
+                    ('invoice', '=', invoice.id),
+                    ('description', '=', 'Gift Card'),
+                ])
+                self.assertEqual(
+                    line.account,
+                    Configuration(1).liability_account
+                )
 
                 self.assertEqual(gift_card.amount, 500)
                 self.assertEqual(gift_card.state, 'active')
@@ -198,6 +207,255 @@ class TestGiftCard(TestBase):
 
                 self.assertEqual(invoice.untaxed_amount, 900)
                 self.assertEqual(invoice.total_amount, 900)
+
+    def test0021_phy_gift_card_on_processing_sale(self):
+        """
+        Check if physical gift card is being created on processing sale when
+        invoice method is shipping
+        """
+        Sale = POOL.get('sale.sale')
+        GiftCard = POOL.get('gift_card.gift_card')
+        Invoice = POOL.get('account.invoice')
+        Configuration = POOL.get('gift_card.configuration')
+        SaleLine = POOL.get('sale.line')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
+            self.setup_defaults()
+
+            gift_card_product = self.create_product(is_gift_card=True)
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                Configuration.create([{
+                    'liability_account': self._get_account_by_kind('revenue').id
+                }])
+
+                gc_price, _, = gift_card_product.gift_card_prices
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_method': 'shipment',
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'type': 'line',
+                            'quantity': 2,
+                            'unit': self.uom,
+                            'unit_price': 200,
+                            'description': 'Test description1',
+                            'product': self.product.id,
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card',
+                            'product': gift_card_product,
+                            'gc_price': gc_price,
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+
+                }])
+
+                sale_line1, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', gift_card_product.id),
+                ])
+
+                sale_line2, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', self.product.id),
+                ])
+
+                sale_line3, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', None),
+                ])
+
+                self.assertTrue(sale_line1.is_gift_card)
+                self.assertFalse(sale_line2.is_gift_card)
+                self.assertFalse(sale_line3.is_gift_card)
+
+                self.assertEqual(sale_line1.gift_card_delivery_mode, 'physical')
+
+                # Gift card line amount is included in untaxed amount
+                self.assertEqual(sale.untaxed_amount, 900)
+
+                # Gift card line amount is included in total amount
+                self.assertEqual(sale.total_amount, 900)
+
+                Sale.quote([sale])
+
+                self.assertEqual(sale.untaxed_amount, 900)
+                self.assertEqual(sale.total_amount, 900)
+
+                Sale.confirm([sale])
+
+                self.assertEqual(sale.untaxed_amount, 900)
+                self.assertEqual(sale.total_amount, 900)
+
+                self.assertFalse(
+                    GiftCard.search([('sale_line', '=', sale_line1.id)])
+                )
+
+                self.assertFalse(Invoice.search([]))
+
+                Sale.process([sale])
+
+                self.assertEqual(sale.untaxed_amount, 900)
+                self.assertEqual(sale.total_amount, 900)
+
+                self.assertTrue(
+                    GiftCard.search([('sale_line', '=', sale_line1.id)])
+                )
+
+                self.assertEqual(
+                    GiftCard.search(
+                        [('sale_line', '=', sale_line1.id)], count=True
+                    ), 1
+                )
+
+                self.assertEqual(Invoice.search([], count=True), 0)
+
+                gift_card, = GiftCard.search([
+                    ('sale_line', '=', sale_line1.id)
+                ])
+
+                self.assertEqual(gift_card.amount, 500)
+                self.assertEqual(gift_card.state, 'active')
+                self.assertEqual(gift_card.sale, sale)
+
+    def test0022_virtual_gift_card_on_processing_sale(self):
+        """
+        Check if virtual gift card is being created on processing sale
+        """
+        Sale = POOL.get('sale.sale')
+        GiftCard = POOL.get('gift_card.gift_card')
+        Invoice = POOL.get('account.invoice')
+        InvoiceLine = POOL.get('account.invoice.line')
+        Configuration = POOL.get('gift_card.configuration')
+        SaleLine = POOL.get('sale.line')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
+            self.setup_defaults()
+
+            gift_card_product = self.create_product(
+                type='service',
+                mode='virtual',
+                is_gift_card=True
+            )
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                Configuration.create([{
+                    'liability_account': self._get_account_by_kind('revenue').id
+                }])
+
+                gc_price, _, = gift_card_product.gift_card_prices
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_method': 'shipment',
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card',
+                            'product': gift_card_product,
+                            'gc_price': gc_price,
+                            'recipient_email': 'test@example.com',
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+
+                }])
+
+                sale_line1, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', gift_card_product.id),
+                ])
+
+                sale_line3, = SaleLine.search([
+                    ('sale', '=', sale.id),
+                    ('product', '=', None),
+                ])
+
+                self.assertTrue(sale_line1.is_gift_card)
+                self.assertFalse(sale_line3.is_gift_card)
+
+                self.assertEqual(sale_line1.gift_card_delivery_mode, 'virtual')
+
+                # Gift card line amount is included in untaxed amount
+                self.assertEqual(sale.untaxed_amount, 500)
+
+                # Gift card line amount is included in total amount
+                self.assertEqual(sale.total_amount, 500)
+
+                Sale.quote([sale])
+
+                self.assertEqual(sale.untaxed_amount, 500)
+                self.assertEqual(sale.total_amount, 500)
+
+                Sale.confirm([sale])
+
+                self.assertEqual(sale.untaxed_amount, 500)
+                self.assertEqual(sale.total_amount, 500)
+
+                self.assertFalse(
+                    GiftCard.search([('sale_line', '=', sale_line1.id)])
+                )
+
+                self.assertFalse(Invoice.search([]))
+
+                Sale.process([sale])
+
+                self.assertEqual(sale.untaxed_amount, 500)
+                self.assertEqual(sale.total_amount, 500)
+
+                self.assertTrue(
+                    GiftCard.search([('sale_line', '=', sale_line1.id)])
+                )
+
+                self.assertEqual(
+                    GiftCard.search(
+                        [('sale_line', '=', sale_line1.id)], count=True
+                    ), 1
+                )
+
+                self.assertEqual(Invoice.search([], count=True), 1)
+
+                gift_card, = GiftCard.search([
+                    ('sale_line', '=', sale_line1.id)
+                ])
+
+                invoice, = Invoice.search([])
+                line, = InvoiceLine.search([
+                    ('invoice', '=', invoice.id),
+                    ('description', '=', 'Gift Card'),
+                ])
+                self.assertEqual(
+                    line.account,
+                    Configuration(1).liability_account
+                )
+
+                self.assertEqual(gift_card.amount, 500)
+                self.assertEqual(gift_card.state, 'active')
+                self.assertEqual(gift_card.sale, sale)
+
+                self.assertEqual(invoice.untaxed_amount, 500)
+                self.assertEqual(invoice.total_amount, 500)
 
     def test0025_create_gift_card_for_line(self):
         """
