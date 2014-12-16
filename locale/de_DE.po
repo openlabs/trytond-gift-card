@@ -1,0 +1,447 @@
+# 
+msgid ""
+msgstr "Content-Type: text/plain; charset=utf-8\n"
+
+msgctxt "error:gift_card.gift_card:"
+msgid "Gift cards can not be deleted in active state"
+msgstr "Aktive Gutscheine können nicht gelöscht werden"
+
+msgctxt "error:gift_card.gift_card:"
+msgid "The number of the gift card must be unique."
+msgstr "Die Nummer für einen Gutschein kann nur einmal vergeben werden"
+
+msgctxt "error:payment_gateway.transaction:"
+msgid "Card %s is found to have insufficient amount"
+msgstr "Der Betrag von Gutschein %s deckt nicht den gesamten Betrag"
+
+msgctxt "error:product.product.gift_card.price:"
+msgid "Price can not be negative"
+msgstr "Preis kann nicht negativ sein"
+
+msgctxt "error:product.product:"
+msgid "Gift Card minimum amount must be smaller than gift card maximum amount"
+msgstr "Minimalbetrag muss geringer als Maximalbetrag sein"
+
+msgctxt "error:product.product:"
+msgid "Gift card amounts can not be negative"
+msgstr "Gutscheinbeträge können nicht negativ sein"
+
+msgctxt "error:product.product:"
+msgid "Product %s is not appropriate under %s delivery mode"
+msgstr "Artikel %s nicht passend für Auslieferung %s"
+
+msgctxt "error:sale.line:"
+msgid "Gift card amount must be within %s %s and %s %s"
+msgstr "Gutscheinbetrag muss zwischen %s %s und %s %s liegen"
+
+msgctxt "field:gift_card.configuration,create_date:"
+msgid "Create Date"
+msgstr "Erstellungsdatum"
+
+msgctxt "field:gift_card.configuration,create_uid:"
+msgid "Create User"
+msgstr "Erstellt durch"
+
+msgctxt "field:gift_card.configuration,id:"
+msgid "ID"
+msgstr "ID"
+
+msgctxt "field:gift_card.configuration,liability_account:"
+msgid "Liability Account"
+msgstr "Verbindlichkeitskonto"
+
+msgctxt "field:gift_card.configuration,number_sequence:"
+msgid "Number Sequence"
+msgstr "Nummernkreis Gutschein"
+
+msgctxt "field:gift_card.configuration,rec_name:"
+msgid "Name"
+msgstr "Name"
+
+msgctxt "field:gift_card.configuration,write_date:"
+msgid "Write Date"
+msgstr "Zuletzt geändert"
+
+msgctxt "field:gift_card.configuration,write_uid:"
+msgid "Write User"
+msgstr "Letzte Änderung durch"
+
+msgctxt "field:gift_card.gift_card,amount:"
+msgid "Amount"
+msgstr "Betrag"
+
+msgctxt "field:gift_card.gift_card,amount_authorized:"
+msgid "Amount Authorized"
+msgstr "Autorisierter Betrag"
+
+msgctxt "field:gift_card.gift_card,amount_available:"
+msgid "Amount Available"
+msgstr "Verfügbarer Betrag"
+
+msgctxt "field:gift_card.gift_card,amount_captured:"
+msgid "Amount Captured"
+msgstr "Eingenommener Betrag"
+
+msgctxt "field:gift_card.gift_card,comment:"
+msgid "Comment"
+msgstr "Kommentar"
+
+msgctxt "field:gift_card.gift_card,create_date:"
+msgid "Create Date"
+msgstr "Erstellungsdatum"
+
+msgctxt "field:gift_card.gift_card,create_uid:"
+msgid "Create User"
+msgstr "Erstellt durch"
+
+msgctxt "field:gift_card.gift_card,currency:"
+msgid "Currency"
+msgstr "Währung"
+
+msgctxt "field:gift_card.gift_card,currency_digits:"
+msgid "Currency Digits"
+msgstr "Währung (signifikante Stellen)"
+
+msgctxt "field:gift_card.gift_card,id:"
+msgid "ID"
+msgstr "ID"
+
+msgctxt "field:gift_card.gift_card,is_email_sent:"
+msgid "Is Email Sent ?"
+msgstr "E-Mail gesendet"
+
+msgctxt "field:gift_card.gift_card,message:"
+msgid "Message"
+msgstr "Nachricht"
+
+msgctxt "field:gift_card.gift_card,number:"
+msgid "Number"
+msgstr "Nummer"
+
+msgctxt "field:gift_card.gift_card,origin:"
+msgid "Origin"
+msgstr "Herkunft"
+
+msgctxt "field:gift_card.gift_card,payment_transactions:"
+msgid "Payment Transactions"
+msgstr "Zahlungstransaktionen"
+
+msgctxt "field:gift_card.gift_card,rec_name:"
+msgid "Name"
+msgstr "Name"
+
+msgctxt "field:gift_card.gift_card,recipient_email:"
+msgid "Recipient Email"
+msgstr "Empfänger E-Mail"
+
+msgctxt "field:gift_card.gift_card,recipient_name:"
+msgid "Recipient Name"
+msgstr "Empfänger Name"
+
+msgctxt "field:gift_card.gift_card,sale:"
+msgid "Sale"
+msgstr "Verkauf"
+
+msgctxt "field:gift_card.gift_card,sale_line:"
+msgid "Sale Line"
+msgstr "Verkaufsposition"
+
+msgctxt "field:gift_card.gift_card,state:"
+msgid "State"
+msgstr "Status"
+
+msgctxt "field:gift_card.gift_card,write_date:"
+msgid "Write Date"
+msgstr "Zuletzt geändert"
+
+msgctxt "field:gift_card.gift_card,write_uid:"
+msgid "Write User"
+msgstr "Letzte Änderung durch"
+
+msgctxt "field:payment_gateway.transaction,gift_card:"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "field:product.product,allow_open_amount:"
+msgid "Allow Open Amount ?"
+msgstr "Offener Betrag erlaubt?"
+
+msgctxt "field:product.product,gc_max:"
+msgid "Gift Card Maximum Amount"
+msgstr "Gutschein Maximalbetrag"
+
+msgctxt "field:product.product,gc_min:"
+msgid "Gift Card Minimum Amount"
+msgstr "Gutschein Minimalbetrag"
+
+msgctxt "field:product.product,gift_card_delivery_mode:"
+msgid "Gift Card Delivery Mode"
+msgstr "Gutschein Auslieferungsmodus"
+
+msgctxt "field:product.product,gift_card_prices:"
+msgid "Gift Card Prices"
+msgstr "Gutscheinpreise"
+
+msgctxt "field:product.product,is_gift_card:"
+msgid "Is Gift Card ?"
+msgstr "Gutschein"
+
+msgctxt "field:product.product.gift_card.price,create_date:"
+msgid "Create Date"
+msgstr "Erstellungsdatum"
+
+msgctxt "field:product.product.gift_card.price,create_uid:"
+msgid "Create User"
+msgstr "Erstellt durch"
+
+msgctxt "field:product.product.gift_card.price,id:"
+msgid "ID"
+msgstr "ID"
+
+msgctxt "field:product.product.gift_card.price,price:"
+msgid "Price"
+msgstr "Preis"
+
+msgctxt "field:product.product.gift_card.price,product:"
+msgid "Product"
+msgstr "Artikel"
+
+msgctxt "field:product.product.gift_card.price,rec_name:"
+msgid "Name"
+msgstr "Name"
+
+msgctxt "field:product.product.gift_card.price,write_date:"
+msgid "Write Date"
+msgstr "Zuletzt geändert"
+
+msgctxt "field:product.product.gift_card.price,write_uid:"
+msgid "Write User"
+msgstr "Letzte Änderung durch"
+
+msgctxt "field:sale.line,allow_open_amount:"
+msgid "Allow Open Amount?"
+msgstr "Offener Betrag erlaubt?"
+
+msgctxt "field:sale.line,gc_price:"
+msgid "Gift Card Price"
+msgstr "Gutscheinpreis"
+
+msgctxt "field:sale.line,gift_card_delivery_mode:"
+msgid "Gift Card Delivery Mode"
+msgstr "Gutschein Auslieferungsmodus"
+
+msgctxt "field:sale.line,gift_cards:"
+msgid "Gift Cards"
+msgstr "Gutscheine"
+
+msgctxt "field:sale.line,is_gift_card:"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "field:sale.line,message:"
+msgid "Message"
+msgstr "Nachricht"
+
+msgctxt "field:sale.line,recipient_email:"
+msgid "Recipient Email"
+msgstr "Empfänger E-Mail"
+
+msgctxt "field:sale.line,recipient_name:"
+msgid "Recipient Name"
+msgstr "Empfänger Name"
+
+msgctxt "help:gift_card.gift_card,number:"
+msgid "Number of the gift card"
+msgstr "Nummer des Gutscheins"
+
+msgctxt "model:gift_card.configuration,name:"
+msgid "Configuration"
+msgstr "Einstellungen"
+
+msgctxt "model:gift_card.gift_card,name:"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "model:ir.action,name:act_configuration"
+msgid "Configuration"
+msgstr "Einstellungen"
+
+msgctxt "model:ir.action,name:act_gift_card"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "model:ir.action,name:act_gift_cards"
+msgid "Gift Cards"
+msgstr "Gutscheine"
+
+msgctxt "model:ir.action,name:act_sales"
+msgid "Sales"
+msgstr "Verkäufe"
+
+msgctxt "model:ir.action,name:report_gift_card"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "model:ir.sequence,name:sequence_number"
+msgid "Gift Card Number"
+msgstr "Gutscheinnummer"
+
+msgctxt "model:ir.sequence.type,name:sequence_type_number"
+msgid "Gift Card Number"
+msgstr "Gutscheinnummer"
+
+msgctxt "model:ir.ui.menu,name:configuration_menu"
+msgid "Configuration"
+msgstr "Einstellungen"
+
+msgctxt "model:ir.ui.menu,name:gift_card_main_menu"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "model:ir.ui.menu,name:gift_card_menu"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "model:product.product.gift_card.price,name:"
+msgid "Gift Card Price"
+msgstr "Gutscheinpreis"
+
+msgctxt "model:res.group,name:gift_card_email_receivers"
+msgid "Gift Card E-mail Receivers"
+msgstr "Gutschein E-Mail Empfänger"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "A GIFT FOR"
+msgstr "GUTSCHEIN FÜR"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "Authorized Signature"
+msgstr "Autorisierte Unterschrift"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "Date:"
+msgstr "Datum:"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "FROM"
+msgstr "VON"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "Gift Certificate"
+msgstr "Geschenkgutschein"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "No."
+msgstr "Nr."
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "ONLY."
+msgstr " "
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "VALUE"
+msgstr "WERT"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "_________________________________"
+msgstr "_________________________________"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "_____________________________________________________"
+msgstr "_____________________________________________________"
+
+msgctxt "odt:gift_card.gift_card:"
+msgid "______________________________________________________"
+msgstr "______________________________________________________"
+
+msgctxt "selection:gift_card.gift_card,state:"
+msgid "Active"
+msgstr "Aktiv"
+
+msgctxt "selection:gift_card.gift_card,state:"
+msgid "Canceled"
+msgstr "Annulliert"
+
+msgctxt "selection:gift_card.gift_card,state:"
+msgid "Draft"
+msgstr "Entwurf"
+
+msgctxt "selection:gift_card.gift_card,state:"
+msgid "Used"
+msgstr "Eingelöst"
+
+msgctxt "selection:product.product,gift_card_delivery_mode:"
+msgid "Combined"
+msgstr "Kombiniert"
+
+msgctxt "selection:product.product,gift_card_delivery_mode:"
+msgid "Physical"
+msgstr "Papier"
+
+msgctxt "selection:product.product,gift_card_delivery_mode:"
+msgid "Virtual"
+msgstr "Virtuell"
+
+msgctxt "selection:sale.line,gift_card_delivery_mode:"
+msgid "Combined"
+msgstr "Kombiniert"
+
+msgctxt "selection:sale.line,gift_card_delivery_mode:"
+msgid "Physical"
+msgstr "Papier"
+
+msgctxt "selection:sale.line,gift_card_delivery_mode:"
+msgid "Virtual"
+msgstr "Virtuell"
+
+msgctxt "view:gift_card.configuration:"
+msgid "Configuration"
+msgstr "Einstellungen"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "Activate"
+msgstr "Aktivieren"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "Amounts"
+msgstr "Betrag"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "Draft"
+msgstr "Entwurf"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "General"
+msgstr "Allgemein"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "Gift Card"
+msgstr "Gutschein"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "Gift Cards"
+msgstr "Gutscheine"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "Payment Transactions"
+msgstr "Zahlungstransaktionen"
+
+msgctxt "view:gift_card.gift_card:"
+msgid "Recipient Details"
+msgstr "Empfängerdetails"
+
+msgctxt "view:product.product.gift_card.price:"
+msgid "Gift Card Prices"
+msgstr "Gutscheinpreise"
+
+msgctxt "view:product.product:"
+msgid "Gift Cards Information"
+msgstr "Gutschein Information"
+
+msgctxt "view:sale.line:"
+msgid "Gift Cards"
+msgstr "Gutscheine"
+
+msgctxt "view:sale.line:"
+msgid "Recipient Details"
+msgstr "Empfängerdetails"
