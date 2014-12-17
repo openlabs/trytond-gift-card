@@ -53,11 +53,8 @@ class SaleLine:
 
     recipient_name = fields.Char(
         "Recipient Name", states={
-            'invisible': ~(
-                Bool(Eval('is_gift_card')) &
-                (Eval('gift_card_delivery_mode').in_(['virtual', 'combined']))
-            ),
-        }, depends=['gift_card_delivery_mode', 'is_gift_card']
+            'invisible': ~Bool(Eval('is_gift_card')),
+        }, depends=['is_gift_card']
     )
     allow_open_amount = fields.Function(
         fields.Boolean("Allow Open Amount?", states={

@@ -10,7 +10,7 @@
     <xpath expr="//notebook" position="inside">
         <page states="{'invisible': ~Bool(Eval('is_gift_card'))}" string="Gift Cards" id="gift_cards">
             <separator id="recipient_details" string="Recipient Details"
-                  states="{'invisible': Not(And(Bool(Eval('is_gift_card')), Eval('gift_card_delivery_mode').in_(['virtual', 'combined'])))}"
+                  states="{'invisible': Not(Bool(Eval('is_gift_card')))}"
                   colspan="4"/>
                <label name="recipient_email"/>
                <field name="recipient_email"/>
