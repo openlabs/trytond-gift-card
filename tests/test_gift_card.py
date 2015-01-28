@@ -1571,7 +1571,7 @@ class TestGiftCard(TestBase):
 
             self.assertEqual(result['unit_price'], gc_price.price)
 
-    def test0120_pay_manually(self):
+    def test0140_pay_manually(self):
         """
         Check authorized, captured and available amount for manual method
         """
@@ -1618,6 +1618,96 @@ class TestGiftCard(TestBase):
                 PaymentTransaction.capture([payment_transaction])
 
                 self.assertEqual(payment_transaction.state, 'posted')
+
+    def test0150_giftcard_redeem_wizard(self):
+        """
+        Tests the gift card redeem wizard.
+        """
+        GiftCard = POOL.get('gift_card.gift_card')
+        GCRedeemWizard = POOL.get('gift_card.redeem.wizard', type='wizard')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                active_gift_card, = GiftCard.create([{
+                    'amount': Decimal('150'),
+                    'number': '45671338',
+                    'state': 'draft',
+                }])
+
+                gateway = self.create_payment_gateway()
+
+                with Transaction().set_context(
+                    active_ids=[active_gift_card.id]
+                ):
+                    session_id, start_state, end_state = GCRedeemWizard.create()
+                    data = {
+                        start_state: {
+                            'name': 'start',
+                            'gateway': gateway.id,
+                            'description': 'This is a description.',
+                            'party': self.party1.id,
+                            'address': self.party1.addresses[0].id,
+                            'amount': Decimal('100'),
+                            'gift_card': active_gift_card.id,
+                            'currency': self.usd,
+                        },
+                    }
+
+                    # Trying to redeem GC in draft state, error is thrown.
+                    # Note that a domain error is thrown instead of
+                    # check_giftcard_state() being called.
+                    with self.assertRaises(UserError):
+                        GCRedeemWizard.execute(session_id, data, 'redeem')
+
+                    # Test check_giftcard_state(). Draft state error is thrown.
+                    with self.assertRaises(UserError):
+                        GCRedeemWizard(session_id).check_giftcard_state(
+                            active_gift_card
+                        )
+
+                    GiftCard.activate([active_gift_card])
+
+                    # Test the default_start() method.
+                    values = GCRedeemWizard(session_id).default_start({})
+                    self.assertEqual(values['gift_card'], active_gift_card.id)
+                    self.assertEqual(values['gateway'], gateway.id)
+
+                    # Now execute the wizard properly.
+                    GCRedeemWizard.execute(session_id, data, 'redeem')
+                    self.assertEqual(active_gift_card.state, 'active')
+                    self.assertEqual(
+                        active_gift_card.amount_captured,
+                        data[start_state]['amount']
+                    )
+
+                    data[start_state]['amount'] = Decimal('70')
+
+                    # Error thrown because amount available is just 50.
+                    with self.assertRaises(UserError):
+                        GCRedeemWizard.execute(session_id, data, 'redeem')
+
+                    data[start_state]['amount'] = Decimal('-70')
+
+                    # Error thrown because amount is negative.
+                    with self.assertRaises(UserError):
+                        GCRedeemWizard.execute(session_id, data, 'redeem')
+
+                    data[start_state]['amount'] = Decimal('50')
+                    GCRedeemWizard.execute(session_id, data, 'redeem')
+                    self.assertEqual(active_gift_card.state, 'used')
+                    self.assertEqual(
+                        active_gift_card.amount_available, Decimal('0')
+                    )
+
+                    # Now the gift card has already been used, cannot run
+                    # wizard on it once again.
+                    with self.assertRaises(UserError):
+                        GCRedeemWizard(session_id).check_giftcard_state(
+                            active_gift_card
+                        )
 
 
 def suite():
