@@ -30,6 +30,28 @@
             <field name="act_window" ref="act_gift_card"/>
         </record>
 
+        <record model="ir.action.wizard" id="gift_card_redeem_wizard">
+            <field name="name">Redeem Gift Card</field>
+            <field name="wiz_name">gift_card.redeem.wizard</field>
+            <field name="model">gift_card.gift_card</field>
+        </record>
+        <record model="ir.action.keyword" id="gift_card_redeem_keyword">
+            <field name="keyword">form_action</field>
+            <field name="model">gift_card.gift_card,-1</field>
+            <field name="action" ref="gift_card_redeem_wizard"/>
+        </record>
+
+        <record model="ir.ui.view" id="redeem_start_view_form">
+            <field name="model">gift_card.redeem.start</field>
+            <field name="type">form</field>
+            <field name="name">redeem_start_form</field>
+        </record>
+        <record model="ir.ui.view" id="redeem_done_view_form">
+            <field name="model">gift_card.redeem.end</field>
+            <field name="type">form</field>
+            <field name="name">redeem_done_form</field>
+        </record>
+
         <menuitem parent="gift_card_main_menu" action="act_gift_card" id="gift_card_menu"
           sequence="10"/>
 
