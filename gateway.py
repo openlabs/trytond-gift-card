@@ -48,7 +48,8 @@ class PaymentTransaction:
 
         cls._error_messages.update({
             'insufficient_amount':
-                'Card %s is found to have insufficient amount'
+                'Card %s is found to have insufficient amount',
+            'negative_amount': 'The amount to be entered cannot be negative.',
         })
 
         cls._buttons['authorize']['invisible'] = \
@@ -72,6 +73,10 @@ class PaymentTransaction:
         """
         Validates that gift card has sufficient amount to pay
         """
+        if self.amount < 0:
+            # TODO:
+            # Put this bit in payment_gateway.
+            self.raise_user_error("negative_amount")
         if available_amount < self.amount:
             self.raise_user_error("insufficient_amount", self.gift_card.number)
 
