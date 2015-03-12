@@ -14,8 +14,8 @@ from trytond.transaction import Transaction
 from decimal import Decimal
 from test_base import TestBase
 from trytond.exceptions import UserError
-from trytond.config import CONFIG
-CONFIG['smtp_from'] = "test@ol.in"
+from trytond.config import config
+config.set('email', 'from', 'test@ol.in')
 
 
 class TestGiftCard(TestBase):
