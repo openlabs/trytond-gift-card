@@ -2,14 +2,17 @@
 """
     sale.py
 
-    :copyright: (c) 2014 by Openlabs Technologies & Consulting (P) Limited
+    :copyright: (c) 2014-2015 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
 from trytond.model import fields, ModelView
 from trytond.pool import PoolMeta, Pool
 from trytond.pyson import Eval, Bool
+from trytond.wizard import Wizard
 
-__all__ = ['SaleLine', 'Sale']
+__all__ = [
+    'SaleLine', 'Sale', 'AddSalePaymentView', 'Payment', 'AddSalePayment'
+]
 __metaclass__ = PoolMeta
 
 
@@ -214,6 +217,14 @@ class Sale:
             line.create_gift_cards()
 
     @classmethod
+    def get_payment_method_priority(cls):
+        """Priority order for payment methods. Downstream modules can override
+        this method to change the method priority.
+        """
+        return ('gift_card',) + \
+            super(Sale, cls).get_payment_method_priority()
+
+    @classmethod
     @ModelView.button
     def process(cls, sales):
         """
@@ -226,3 +237,70 @@ class Sale:
             if sale.state not in ('confirmed', 'processing', 'done'):
                 continue        # pragma: no cover
             sale.create_gift_cards()
+
+
+class Payment:
+    'Payment'
+    __name__ = 'sale.payment'
+
+    gift_card = fields.Many2One(
+        "gift_card.gift_card", "Gift Card", states={
+            'required': Eval('method') == 'gift_card',
+            'invisible': ~(Eval('method') == 'gift_card'),
+        }, domain=[('state', '=', 'active')], depends=['method']
+    )
+
+    def _create_payment_transaction(self, amount, description):
+        """Creates an active record for gateway transaction.
+        """
+        payment_transaction = super(Payment, self)._create_payment_transaction(
+            amount, description,
+        )
+        payment_transaction.gift_card = self.gift_card
+
+        return payment_transaction
+
+
+class AddSalePaymentView:
+    """
+    View for adding Sale Payments
+    """
+    __name__ = 'sale.payment.add_view'
+
+    gift_card = fields.Many2One(
+        "gift_card.gift_card", "Gift Card", states={
+            'required': Eval('method') == 'gift_card',
+            'invisible': ~(Eval('method') == 'gift_card'),
+        }, domain=[('state', '=', 'active')], depends=['method']
+    )
+
+    @classmethod
+    def __setup__(cls):
+        super(AddSalePaymentView, cls).__setup__()
+
+        for field in [
+            'owner', 'number', 'expiry_year', 'expiry_month',
+            'csc', 'swipe_data', 'payment_profile'
+        ]:
+            getattr(cls, field).states['invisible'] = (
+                getattr(cls, field).states['invisible'] |
+                (Eval('method') == 'gift_card')
+            )
+
+
+class AddSalePayment(Wizard):
+    """
+    Wizard to add a Sale Payment
+    """
+    __name__ = 'sale.payment.add'
+
+    def create_sale_payment(self, profile=None):
+        """
+        Helper function to create new payment
+        """
+        sale_payment = super(AddSalePayment, self).create_sale_payment(
+            profile=profile
+        )
+        sale_payment.gift_card = self.payment_info.gift_card
+
+        return sale_payment

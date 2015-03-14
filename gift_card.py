@@ -2,7 +2,7 @@
 """
     gift_card.py
 
-    :copyright: (c) 2014 by Openlabs Technologies & Consulting (P) Limited
+    :copyright: (c) 2014-2015 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
 from num2words import num2words
@@ -15,7 +15,7 @@ from trytond.transaction import Transaction
 from trytond.report import Report
 from jinja2 import Environment, PackageLoader
 from nereid import render_email
-from trytond.config import CONFIG
+from trytond.config import config
 
 
 __all__ = [
@@ -320,8 +320,10 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         subject = self._get_subject_for_email()
         html_template, text_template = self._get_email_templates()
 
+        sender = config.get('email', 'from')
+
         email_gift_card = render_email(
-            CONFIG['smtp_from'], self.recipient_email,
+            sender, self.recipient_email,
             subject,
             html_template=html_template,
             text_template=text_template,
@@ -330,7 +332,7 @@ class GiftCard(Workflow, ModelSQL, ModelView):
         )
 
         EmailQueue.queue_mail(
-            CONFIG['smtp_from'], [self.recipient_email] + bcc_emails,
+            sender, [self.recipient_email] + bcc_emails,
             email_gift_card.as_string()
         )
         self.is_email_sent = True
