@@ -27,8 +27,7 @@ class SQLiteTest(Command):
         pass
 
     def run(self):
-        from trytond.config import CONFIG
-        CONFIG['db_type'] = 'sqlite'
+        os.environ['TRYTOND_DATABASE_URI'] = 'sqlite://'
         os.environ['DB_NAME'] = ':memory:'
 
         from tests import suite
@@ -54,11 +53,7 @@ class PostgresTest(Command):
         pass
 
     def run(self):
-        from trytond.config import CONFIG
-        CONFIG['db_type'] = 'postgresql'
-        CONFIG['db_host'] = 'localhost'
-        CONFIG['db_port'] = 5432
-        CONFIG['db_user'] = 'postgres'
+        os.environ['TRYTOND_DATABASE_URI'] = 'postgresql://'
 
         os.environ['DB_NAME'] = 'test_' + str(int(time.time()))
 
@@ -118,10 +113,10 @@ setup(
         'trytond.modules.%s.tests' % MODULE,
     ],
     package_data={
-        'trytond.modules.%s' % MODULE: info.get('xml', [])
-        + info.get('translation', [])
-        + ['tryton.cfg', 'locale/*.po', 'tests/*.rst', 'reports/*.odt']
-        + ['view/*.xml', '*.odt', 'emails/*.html'],
+        'trytond.modules.%s' % MODULE: info.get('xml', []) +
+        info.get('translation', []) +
+        ['tryton.cfg', 'locale/*.po', 'tests/*.rst', 'reports/*.odt'] +
+        ['view/*.xml', '*.odt', 'emails/*.html'],
     },
     classifiers=[
         'Development Status :: 4 - Beta',

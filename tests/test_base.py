@@ -2,7 +2,7 @@
 """
     test_base
 
-    :copyright: (C) 2014 by Openlabs Technologies & Consulting (P) Limited
+    :copyright: (C) 2014-2015 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
 import unittest
@@ -36,6 +36,11 @@ class TestBase(unittest.TestCase):
         self.Sequence = POOL.get('ir.sequence')
         self.Account = POOL.get('account.account')
         self.GiftCard = POOL.get('gift_card.gift_card')
+        self.SalePayment = POOL.get('sale.payment')
+        self.Sale = POOL.get('sale.sale')
+        self.SaleLine = POOL.get('sale.line')
+        self.PaymentGateway = POOL.get('payment_gateway.gateway')
+        self.SaleConfig = POOL.get('sale.configuration')
 
     def _create_fiscal_year(self, date_=None, company=None):
         """
@@ -108,6 +113,12 @@ class TestBase(unittest.TestCase):
         create_chart.properties.account_payable = payable
         create_chart.transition_create_properties()
 
+        for account in Account.search([]):
+            # Party required must be set to True for assigning party to
+            # account move lines as per 3.4 version changes
+            account.party_required = True
+            account.save()
+
     def _get_account_by_kind(self, kind, company=None, silent=True):
         """Returns an account with given spec
 
@@ -126,7 +137,10 @@ class TestBase(unittest.TestCase):
         ], limit=1)
         if not accounts and not silent:
             raise Exception("Account not found")
-        return accounts[0] if accounts else False
+
+        if not accounts:
+            return None
+        return accounts[0]
 
     def _create_payment_term(self):
         """Create a simple payment term with all advance
@@ -184,6 +198,11 @@ class TestBase(unittest.TestCase):
 
         self.product = self.create_product()
 
+        sale_config = self.SaleConfig(1)
+        sale_config.payment_authorize_on = 'manual'
+        sale_config.payment_capture_on = 'sale_process'
+        sale_config.save()
+
     def create_product(
         self, type='goods', mode='physical', is_gift_card=False,
         allow_open_amount=False
@@ -232,11 +251,10 @@ class TestBase(unittest.TestCase):
 
         return Template.create([values])[0].products[0]
 
-    def create_payment_gateway(self, method='gift_card'):
+    def create_payment_gateway(self, method='gift_card', provider='self'):
         """
         Create payment gateway
         """
-        PaymentGateway = POOL.get('payment_gateway.gateway')
         Journal = POOL.get('account.journal')
 
         today = date.today()
@@ -262,11 +280,36 @@ class TestBase(unittest.TestCase):
             'sequence': sequence.id,
         }])
 
-        gateway = PaymentGateway(
-            name='Gift Card',
+        gateway = self.PaymentGateway(
+            name=method,
             journal=self.cash_journal,
-            provider='self',
+            provider=provider,
             method=method,
         )
         gateway.save()
         return gateway
+
+    def create_payment_profile(self, party, gateway):
+        """
+        Create a payment profile for the party
+        """
+        AddPaymentProfileWizard = POOL.get(
+            'party.party.payment_profile.add', type='wizard'
+        )
+
+        # create a profile
+        profile_wiz = AddPaymentProfileWizard(
+            AddPaymentProfileWizard.create()[0]
+        )
+        profile_wiz.card_info.party = party.id
+        profile_wiz.card_info.address = party.addresses[0].id
+        profile_wiz.card_info.provider = gateway.provider
+        profile_wiz.card_info.gateway = gateway
+        profile_wiz.card_info.owner = party.name
+        profile_wiz.card_info.number = '4111111111111111'
+        profile_wiz.card_info.expiry_month = '11'
+        profile_wiz.card_info.expiry_year = '2018'
+        profile_wiz.card_info.csc = '353'
+
+        with Transaction().set_context(return_profile=True):
+            return profile_wiz.transition_add()
