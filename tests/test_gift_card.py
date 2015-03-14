@@ -2,7 +2,7 @@
 """
     tests/test_gift_card.py
 
-    :copyright: (c) 2014 by Openlabs Technologies & Consulting (P) Limited
+    :copyright: (c) 2014-2015 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
 import unittest
@@ -163,6 +163,12 @@ class TestGiftCard(TestBase):
 
                 self.assertFalse(Invoice.search([]))
 
+                self.SalePayment.create([{
+                    'sale': sale.id,
+                    'amount': Decimal('1000'),
+                    'gateway': self.create_payment_gateway('manual'),
+                }])
+
                 Sale.process([sale])
 
                 self.assertEqual(sale.untaxed_amount, 900)
@@ -298,6 +304,12 @@ class TestGiftCard(TestBase):
 
                 self.assertFalse(Invoice.search([]))
 
+                self.SalePayment.create([{
+                    'sale': sale.id,
+                    'amount': Decimal('1000'),
+                    'gateway': self.create_payment_gateway('manual'),
+                }])
+
                 Sale.process([sale])
 
                 self.assertEqual(sale.untaxed_amount, 900)
@@ -411,6 +423,12 @@ class TestGiftCard(TestBase):
                 )
 
                 self.assertFalse(Invoice.search([]))
+
+                self.SalePayment.create([{
+                    'sale': sale.id,
+                    'amount': Decimal('1000'),
+                    'gateway': self.create_payment_gateway('manual'),
+                }])
 
                 Sale.process([sale])
 
@@ -1155,6 +1173,12 @@ class TestGiftCard(TestBase):
                     ])
                 )
 
+                self.SalePayment.create([{
+                    'sale': sale.id,
+                    'amount': Decimal('1000'),
+                    'gateway': self.create_payment_gateway('manual'),
+                }])
+
                 Sale.process([sale])
 
                 # Gift card is created
@@ -1511,6 +1535,12 @@ class TestGiftCard(TestBase):
 
                 self.assertEqual(len(gift_card_line.gift_cards), 0)
 
+                self.SalePayment.create([{
+                    'sale': sale.id,
+                    'amount': sale.total_amount,
+                    'gateway': self.create_payment_gateway('manual'),
+                }])
+
                 Sale.process([sale])
 
                 self.assertEqual(sale.state, 'processing')
@@ -1701,6 +1731,176 @@ class TestGiftCard(TestBase):
                         GCRedeemWizard(session_id).check_giftcard_state(
                             active_gift_card
                         )
+
+    def test0200_test_sale_payment_wizard_for_gift_card(self):
+        """
+        Test the wizard to create sale payment for gift card
+        """
+        PaymentWizard = POOL.get('sale.payment.add', type="wizard")
+        GiftCard = POOL.get('gift_card.gift_card')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            # Active gift card
+            active_gift_card, = GiftCard.create([{
+                'number': 'A1234',
+                'amount': Decimal('100'),
+                'currency': self.company.currency.id,
+                'state': 'active'
+            }])
+
+            # Inactive gift card
+            inactive_gift_card, = GiftCard.create([{
+                'number': 'A1567',
+                'amount': Decimal('50'),
+                'currency': self.company.currency.id,
+                'state': 'used'
+            }])
+
+            sale, = self.Sale.create([{
+                'reference': 'Test Sale',
+                'currency': self.company.currency.id,
+                'party': self.party1.id,
+                'sale_date': date.today(),
+                'company': self.company.id,
+                'invoice_address': self.party1.addresses[0].id,
+                'shipment_address': self.party1.addresses[0].id,
+            }])
+
+            sale_line, = self.SaleLine.create([{
+                'sale': sale,
+                'type': 'line',
+                'quantity': 2,
+                'unit': self.uom,
+                'unit_price': 20000,
+                'description': 'Test description',
+                'product': self.product.id
+            }])
+
+            payment_wizard = PaymentWizard(PaymentWizard.create()[0])
+
+            gift_card_gateway = self.create_payment_gateway()
+
+            payment_wizard.payment_info.gateway = gift_card_gateway.id
+            payment_wizard.payment_info.method = gift_card_gateway.method
+            payment_wizard.payment_info.amount = 200
+            payment_wizard.payment_info.payment_profile = None
+            payment_wizard.payment_info.party = sale.party.id
+            payment_wizard.payment_info.sale = sale.id
+            payment_wizard.payment_info.reference = 'ref1'
+
+            payment_wizard.payment_info.gift_card = active_gift_card.id
+            payment_wizard.payment_info.amount = 50
+            self.assertEqual(active_gift_card.amount_available, Decimal('100'))
+            with Transaction().set_context(active_id=sale.id):
+                payment_wizard.transition_add()
+
+            self.assertTrue(len(sale.payments), 1)
+
+            payment, = sale.payments
+            self.assertEqual(payment.amount, Decimal('50'))
+            self.assertEqual(payment.method, gift_card_gateway.method)
+            self.assertEqual(payment.provider, gift_card_gateway.provider)
+            self.assertEqual(payment.gift_card, active_gift_card)
+
+    def test0210_partial_payment_using_gift_card(self):
+        """
+        Check partial payment using cash, credit card and gift card
+        """
+        GiftCard = POOL.get('gift_card.gift_card')
+        Configuration = POOL.get('gift_card.configuration')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            self.setup_defaults()
+
+            Configuration.create([{
+                'liability_account': self._get_account_by_kind('revenue').id
+            }])
+
+            # Create Active gift card
+            active_gift_card, = GiftCard.create([{
+                'number': 'A1234',
+                'amount': Decimal('100'),
+                'currency': self.company.currency.id,
+                'state': 'active'
+            }])
+
+            sale, = self.Sale.create([{
+                'reference': 'Test Sale',
+                'currency': self.company.currency.id,
+                'party': self.party1.id,
+                'invoice_address': self.party1.addresses[0].id,
+                'shipment_address': self.party1.addresses[0].id,
+                'company': self.company.id,
+                'invoice_method': 'manual',
+                'shipment_method': 'manual',
+                'lines': [('create', [{
+                    'description': 'Some item',
+                    'unit_price': Decimal('100'),
+                    'quantity': 1
+                }])]
+            }])
+
+            with Transaction().set_context(use_dummy=True):
+                # Create gateways
+                dummy_gateway = self.create_payment_gateway(
+                    method='credit_card', provider='dummy'
+                )
+                cash_gateway = self.create_payment_gateway(
+                    method='manual', provider='self'
+                )
+                gift_card_gateway = self.create_payment_gateway(
+                    method='gift_card', provider='self'
+                )
+
+                # Create a payment profile
+                payment_profile = self.create_payment_profile(
+                    self.party1, dummy_gateway
+                )
+
+                # Create sale payment for $30 in cash and $50 in card and $20
+                # in gift card
+                payment_gift_card, payment_cash, payment_credit_card = \
+                    self.SalePayment.create([{
+                        'sale': sale.id,
+                        'amount': Decimal('20'),
+                        'gateway': gift_card_gateway,
+                        'gift_card': active_gift_card.id,
+                    }, {
+                        'sale': sale.id,
+                        'amount': Decimal('30'),
+                        'gateway': cash_gateway,
+                    }, {
+                        'sale': sale.id,
+                        'amount': Decimal('50'),
+                        'payment_profile': payment_profile.id,
+                        'gateway': dummy_gateway,
+                    }])
+
+            self.assertEqual(sale.total_amount, Decimal('100'))
+            self.assertEqual(sale.payment_total, Decimal('100'))
+            self.assertEqual(sale.payment_available, Decimal('100'))
+            self.assertEqual(sale.payment_collected, Decimal('0'))
+            self.assertEqual(sale.payment_captured, Decimal('0'))
+            self.assertEqual(sale.payment_authorized, Decimal('0'))
+
+            self.Sale.quote([sale])
+            self.Sale.confirm([sale])
+
+            with Transaction().set_context({'company': self.company.id}):
+                self.Sale.proceed([sale])
+                self.Sale.complete_payments()
+
+            self.assertEqual(sale.state, 'processing')
+            self.assertEqual(len(sale.gateway_transactions), 3)
+
+            self.assertEqual(sale.total_amount, Decimal('100'))
+            self.assertEqual(sale.payment_total, Decimal('100'))
+            self.assertEqual(sale.payment_available, Decimal('0'))
+            self.assertEqual(sale.payment_collected, Decimal('100'))
+            self.assertEqual(sale.payment_captured, Decimal('100'))
+            self.assertEqual(sale.payment_authorized, Decimal('0'))
 
 
 def suite():

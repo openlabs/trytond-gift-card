@@ -10,7 +10,7 @@ from gift_card import (
     GiftCard, GiftCardReport, GiftCardRedeemStart, GiftCardRedeemDone,
     GiftCardRedeemWizard
 )
-from sale import SaleLine, Sale
+from sale import SaleLine, Sale, AddSalePaymentView, Payment, AddSalePayment
 from configuration import Configuration
 from gateway import PaymentGateway, PaymentTransaction
 from product import Product, GiftCardPrice
@@ -25,6 +25,8 @@ def register():
         GiftCardRedeemDone,
         SaleLine,
         Sale,
+        AddSalePaymentView,
+        Payment,
         PaymentGateway,
         PaymentTransaction,
         Product,
@@ -36,5 +38,6 @@ def register():
     )
     Pool.register(
         GiftCardRedeemWizard,
+        AddSalePayment,
         module='gift_card', type_='wizard'
     )
