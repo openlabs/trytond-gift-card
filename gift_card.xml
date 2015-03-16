@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <tryton>
     <data>
-
         <record model="ir.ui.view" id="gift_card_form_view">
             <field name="model">gift_card.gift_card</field>
             <field name="type">form</field>
@@ -87,6 +86,23 @@
             <field name="action" ref="gift_card_redeem_wizard"/>
             <field name="group" ref="account.group_account_admin"/>
         </record>
-
+        <record model="ir.action.act_window.domain" id="act_gift_card_form_domain_draft">
+            <field name="name">Draft</field>
+            <field name="sequence" eval="10"/>
+            <field name="domain">[('state', '=', 'draft')]</field>
+            <field name="act_window" ref="act_gift_card"/>
+        </record>
+        <record model="ir.action.act_window.domain" id="act_gift_card_form_domain_active">
+            <field name="name">Active</field>
+            <field name="sequence" eval="20"/>
+            <field name="domain">[('state', '=', 'active')]</field>
+            <field name="act_window" ref="act_gift_card"/>
+        </record>
+        <record model="ir.action.act_window.domain" id="act_gift_card_form_domain_all">
+            <field name="name">All</field>
+            <field name="sequence" eval="30"/>
+            <field name="domain"></field>
+            <field name="act_window" ref="act_gift_card"/>
+        </record>
     </data>
 </tryton>
