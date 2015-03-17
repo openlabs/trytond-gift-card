@@ -301,6 +301,7 @@ class AddSalePayment(Wizard):
         sale_payment = super(AddSalePayment, self).create_sale_payment(
             profile=profile
         )
-        sale_payment.gift_card = self.payment_info.gift_card or None
+        sale_payment.gift_card = (self.payment_info.method == 'gift_card')  \
+            and self.payment_info.gift_card or None
 
         return sale_payment
