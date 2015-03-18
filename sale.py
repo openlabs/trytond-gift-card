@@ -301,6 +301,10 @@ class AddSalePayment(Wizard):
         sale_payment = super(AddSalePayment, self).create_sale_payment(
             profile=profile
         )
+        # XXX: While a value will exist for the field gift_card when
+        # it's the Tryton client calling the wizard, it is not going
+        # to be there as an attribute when called from API (from another
+        # module/model for example).
         sale_payment.gift_card = (self.payment_info.method == 'gift_card')  \
             and self.payment_info.gift_card or None
 
