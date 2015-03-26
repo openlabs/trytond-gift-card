@@ -260,6 +260,36 @@ class Payment:
 
         return payment_transaction
 
+    @classmethod
+    def validate(cls, payments):
+        """
+        Validate payments
+        """
+        super(Payment, cls).validate(payments)
+
+        for payment in payments:
+            payment.check_gift_card_amount()
+
+    def check_gift_card_amount(self):
+        """
+        Payment should not be created if gift card has insufficient amount
+        """
+        if self.gift_card and self.gift_card.amount_available < self.amount:
+            self.raise_user_error(
+                'insufficient_amount', (
+                    self.gift_card.number, self.sale.currency.code, self.amount,
+                )
+            )
+
+    @classmethod
+    def __setup__(cls):
+        super(Payment, cls).__setup__()
+
+        cls._error_messages.update({
+            'insufficient_amount':
+                'Gift card %s has no sufficient amount to pay %s %s'
+        })
+
 
 class AddSalePaymentView:
     """
