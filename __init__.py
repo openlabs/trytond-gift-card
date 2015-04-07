@@ -11,7 +11,7 @@ from gift_card import (
     GiftCardRedeemWizard
 )
 from sale import SaleLine, Sale, AddSalePaymentView, Payment, AddSalePayment
-from configuration import Configuration
+from configuration import Configuration, SaleConfiguration
 from gateway import PaymentGateway, PaymentTransaction
 from product import Product, GiftCardPrice
 
@@ -23,6 +23,7 @@ def register():
         GiftCardPrice,
         GiftCardRedeemStart,
         GiftCardRedeemDone,
+        SaleConfiguration,
         SaleLine,
         Sale,
         AddSalePaymentView,

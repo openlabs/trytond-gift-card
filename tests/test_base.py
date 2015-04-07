@@ -201,6 +201,7 @@ class TestBase(unittest.TestCase):
         sale_config = self.SaleConfig(1)
         sale_config.payment_authorize_on = 'manual'
         sale_config.payment_capture_on = 'sale_process'
+        sale_config.gift_card_method = 'order'
         sale_config.save()
 
     def create_product(
