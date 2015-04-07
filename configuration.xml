@@ -43,5 +43,11 @@
             <field name="value" eval="'ir.sequence,' + str(ref('sequence_number'))"/>
         </record>
 
+        <record model="ir.ui.view" id="sale_configuration_view_form">
+            <field name="model">sale.configuration</field>
+            <field name="inherit" ref="sale.sale_configuration_view_form"/>
+            <field name="name">sale_configuration_form</field>
+        </record>
+
     </data>
 </tryton>

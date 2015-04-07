@@ -174,10 +174,6 @@ class SaleLine:
             # Not a gift card line
             return None
 
-        if self.gift_cards:     # pragma: no cover
-            # Cards already created
-            return None
-
         product = self.product
 
         if product.allow_open_amount and not (
@@ -190,6 +186,26 @@ class SaleLine:
                 )
             )
 
+        if self.sale.gift_card_method == 'order':
+            quantity = self.quantity
+        else:
+            # On invoice paid
+            quantity_paid = 0
+            for invoice_line in self.invoice_lines:
+                if invoice_line.invoice.state == 'paid':
+                    invoice_line.quantity
+                    quantity_paid += invoice_line.quantity
+
+            # XXX: Do not consider cancelled ones in the gift cards.
+            # card could have been cancelled for reasons like wrong message ?
+            quantity_created = len(self.gift_cards)
+            # Remove already created gift cards
+            quantity = quantity_paid - quantity_created
+
+        if not quantity > 0:
+            # No more gift cards to create
+            return
+
         gift_cards = GiftCard.create([{
             'amount': self.unit_price,
             'sale_line': self.id,
@@ -197,9 +213,8 @@ class SaleLine:
             'recipient_email': self.recipient_email,
             'recipient_name': self.recipient_name,
             'origin': '%s,%d' % (self.sale.__name__, self.sale.id),
-        } for each in range(0, int(self.quantity))])
+        } for each in range(0, int(quantity))])
 
-        # TODO: have option of creating card after invoice is paid ?
         GiftCard.activate(gift_cards)
 
         return gift_cards
@@ -208,6 +223,19 @@ class SaleLine:
 class Sale:
     "Sale"
     __name__ = 'sale.sale'
+
+    # Gift card creation method
+    gift_card_method = fields.Selection([
+        ('order', 'On Order Processed'),
+        ('invoice', 'On Invoice Paid'),
+    ], 'Gift Card Creation Method', required=True)
+
+    @staticmethod
+    def default_gift_card_method():
+        SaleConfig = Pool().get('sale.configuration')
+        config = SaleConfig(1)
+
+        return config.gift_card_method
 
     def create_gift_cards(self):
         '''

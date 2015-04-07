@@ -1902,6 +1902,142 @@ class TestGiftCard(TestBase):
             self.assertEqual(sale.payment_captured, Decimal('100'))
             self.assertEqual(sale.payment_authorized, Decimal('0'))
 
+    def test3000_gift_card_method(self):
+        """
+        Check if gift card is being created according to gift card method
+        """
+        Sale = POOL.get('sale.sale')
+        GiftCard = POOL.get('gift_card.gift_card')
+        Invoice = POOL.get('account.invoice')
+        Configuration = POOL.get('gift_card.configuration')
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+
+            self.setup_defaults()
+            gift_card_product1 = self.create_product(is_gift_card=True)
+            gift_card_product2 = self.create_product(is_gift_card=True)
+
+            with Transaction().set_context({'company': self.company.id}):
+
+                Configuration.create([{
+                    'liability_account': self._get_account_by_kind('revenue').id
+                }])
+
+                gc_price1, _, = gift_card_product1.gift_card_prices
+                gc_price2, _, = gift_card_product2.gift_card_prices
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card 1',
+                            'product': gift_card_product1,
+                            'gc_price': gc_price1
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card 2',
+                            'product': gift_card_product2,
+                            'gc_price': gc_price2,
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+                }])
+
+                Sale.quote([sale])
+                Sale.confirm([sale])
+
+                self.SalePayment.create([{
+                    'sale': sale.id,
+                    'amount': Decimal('1000'),
+                    'gateway': self.create_payment_gateway('manual'),
+                }])
+
+                Sale.process([sale])
+
+                # Two giftcards should have been created and activated
+                self.assertEqual(
+                    GiftCard.search([('state', '=', 'active')], count=True),
+                    2
+                )
+
+                # Now re-do sale with invoice payment
+                config = self.SaleConfig(1)
+                config.gift_card_method = 'invoice'
+                config.save()
+
+                sale, = Sale.create([{
+                    'reference': 'Sale1',
+                    'sale_date': date.today(),
+                    'invoice_address': self.party1.addresses[0].id,
+                    'shipment_address': self.party1.addresses[0].id,
+                    'party': self.party1.id,
+                    'lines': [
+                        ('create', [{
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card 1',
+                            'product': gift_card_product1,
+                            'gc_price': gc_price1
+                        }, {
+                            'quantity': 1,
+                            'unit': self.uom,
+                            'unit_price': 500,
+                            'description': 'Gift Card 2',
+                            'product': gift_card_product2,
+                            'gc_price': gc_price2,
+                        }, {
+                            'type': 'comment',
+                            'description': 'Test line',
+                        }])
+                    ]
+                }])
+
+                Sale.quote([sale])
+                Sale.confirm([sale])
+
+                payment, = self.SalePayment.create([{
+                    'sale': sale.id,
+                    'amount': Decimal('1000'),
+                    'gateway': self.create_payment_gateway('manual'),
+                }])
+
+                Sale.process([sale])
+
+                # No new giftcards
+                self.assertEqual(
+                    GiftCard.search([('state', '=', 'active')], count=True),
+                    2
+                )
+
+                # Post and pay the invoice
+                invoice, = sale.invoices
+                Invoice.post([invoice])
+
+                invoice.pay_invoice(
+                    invoice.total_amount,
+                    self.cash_journal,
+                    invoice.invoice_date,
+                    'Payment to make invoice paid - obviously!'
+                )
+                Invoice.paid([invoice])
+
+                # New giftcards
+                self.assertEqual(
+                    GiftCard.search([('state', '=', 'active')], count=True),
+                    4
+                )
+
 
 def suite():
     """
