@@ -1890,7 +1890,7 @@ class TestGiftCard(TestBase):
 
             with Transaction().set_context({'company': self.company.id}):
                 self.Sale.proceed([sale])
-                self.Sale.complete_payments()
+                sale.process_pending_payments()
 
             self.assertEqual(sale.state, 'processing')
             self.assertEqual(len(sale.gateway_transactions), 3)
