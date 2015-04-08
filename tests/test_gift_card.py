@@ -1970,6 +1970,15 @@ class TestGiftCard(TestBase):
                     2
                 )
 
+                # Trigger sale process again
+                Sale.process([sale])
+
+                # No new giftcards should have been created
+                self.assertEqual(
+                    GiftCard.search([('state', '=', 'active')], count=True),
+                    2
+                )
+
                 # Now re-do sale with invoice payment
                 config = self.SaleConfig(1)
                 config.gift_card_method = 'invoice'
