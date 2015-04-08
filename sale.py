@@ -186,8 +186,12 @@ class SaleLine:
                 )
             )
 
+        # XXX: Do not consider cancelled ones in the gift cards.
+        # card could have been cancelled for reasons like wrong message ?
+        quantity_created = len(self.gift_cards)
+
         if self.sale.gift_card_method == 'order':
-            quantity = self.quantity
+            quantity = self.quantity - quantity_created
         else:
             # On invoice paid
             quantity_paid = 0
@@ -196,9 +200,6 @@ class SaleLine:
                     invoice_line.quantity
                     quantity_paid += invoice_line.quantity
 
-            # XXX: Do not consider cancelled ones in the gift cards.
-            # card could have been cancelled for reasons like wrong message ?
-            quantity_created = len(self.gift_cards)
             # Remove already created gift cards
             quantity = quantity_paid - quantity_created
 
@@ -229,6 +230,12 @@ class Sale:
         ('order', 'On Order Processed'),
         ('invoice', 'On Invoice Paid'),
     ], 'Gift Card Creation Method', required=True)
+
+    @classmethod
+    def __setup__(cls):
+        super(Sale, cls).__setup__()
+
+        cls.gift_card_method.states = cls.shipment_method.states
 
     @staticmethod
     def default_gift_card_method():
