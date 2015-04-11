@@ -1,5 +1,6 @@
 <data>
-      <xpath expr="//field[@name='active']" position="after">
+    <xpath expr="/form/notebook" position="inside">
+        <page id="gift_card_details" string="Gift Card">
           <label name="is_gift_card" />
           <field name="is_gift_card" />
           <newline />
@@ -15,5 +16,6 @@
               <newline/>
               <field name="gift_card_prices" colspan="4"/>
           </group>
-      </xpath>
+        </page>
+    </xpath>
 </data>
