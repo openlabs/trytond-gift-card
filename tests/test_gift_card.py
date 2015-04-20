@@ -1878,6 +1878,13 @@ class TestGiftCard(TestBase):
                         'gateway': dummy_gateway,
                     }])
 
+            self.assertTrue(
+                payment_credit_card.description.startswith("Paid by Card"))
+            self.assertTrue(
+                payment_cash.description.startswith("Paid by Cash"))
+            self.assertTrue(
+                payment_gift_card.description.startswith("Paid by Gift"))
+
             self.assertEqual(sale.total_amount, Decimal('100'))
             self.assertEqual(sale.payment_total, Decimal('100'))
             self.assertEqual(sale.payment_available, Decimal('100'))

@@ -325,6 +325,18 @@ class Payment:
                 'Gift card %s has no sufficient amount to pay %s %s'
         })
 
+    def get_payment_description(self, name):
+        """
+        Return a short description of the sale payment
+        This can be used in documents to show payment details
+        """
+        if self.method == 'gift_card':
+            return (
+                "Paid by Gift Certificate " + "(" + ("x" * 5) +
+                self.gift_card.number[-3:] + ")"
+            )
+        return super(Payment, self).get_payment_description(name)
+
 
 class AddSalePaymentView:
     """
