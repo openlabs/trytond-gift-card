@@ -519,6 +519,7 @@ class GiftCardRedeemWizard(Wizard):
             'currency': self.start.currency.id,
             'gateway': self.start.gateway.id,
             'gift_card': self.start.gift_card.id,
+            'credit_account': self.start.party.account_receivable.id,
         }])
         PaymentTransaction.capture([transaction])
 
