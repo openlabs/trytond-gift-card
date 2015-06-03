@@ -113,12 +113,6 @@ class TestBase(unittest.TestCase):
         create_chart.properties.account_payable = payable
         create_chart.transition_create_properties()
 
-        for account in Account.search([]):
-            # Party required must be set to True for assigning party to
-            # account move lines as per 3.4 version changes
-            account.party_required = True
-            account.save()
-
     def _get_account_by_kind(self, kind, company=None, silent=True):
         """Returns an account with given spec
 
