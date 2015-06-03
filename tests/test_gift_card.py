@@ -167,6 +167,7 @@ class TestGiftCard(TestBase):
                     'sale': sale.id,
                     'amount': Decimal('1000'),
                     'gateway': self.create_payment_gateway('manual'),
+                    'credit_account': self.party1.account_receivable.id,
                 }])
 
                 Sale.process([sale])
@@ -308,6 +309,7 @@ class TestGiftCard(TestBase):
                     'sale': sale.id,
                     'amount': Decimal('1000'),
                     'gateway': self.create_payment_gateway('manual'),
+                    'credit_account': self.party1.account_receivable.id,
                 }])
 
                 Sale.process([sale])
@@ -428,6 +430,7 @@ class TestGiftCard(TestBase):
                     'sale': sale.id,
                     'amount': Decimal('1000'),
                     'gateway': self.create_payment_gateway('manual'),
+                    'credit_account': self.party1.account_receivable.id,
                 }])
 
                 Sale.process([sale])
@@ -706,6 +709,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -730,6 +734,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -779,6 +784,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -808,6 +814,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -842,6 +849,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -878,6 +886,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -906,6 +915,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -989,6 +999,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction1.save()
 
@@ -1002,6 +1013,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction2.save()
 
@@ -1016,6 +1028,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction3.save()
 
@@ -1029,6 +1042,7 @@ class TestGiftCard(TestBase):
                     currency=self.company.currency.id,
                     gateway=gateway.id,
                     gift_card=active_gift_card,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction4.save()
 
@@ -1177,6 +1191,7 @@ class TestGiftCard(TestBase):
                     'sale': sale.id,
                     'amount': Decimal('1000'),
                     'gateway': self.create_payment_gateway('manual'),
+                    'credit_account': self.party1.account_receivable.id,
                 }])
 
                 Sale.process([sale])
@@ -1539,6 +1554,7 @@ class TestGiftCard(TestBase):
                     'sale': sale.id,
                     'amount': sale.total_amount,
                     'gateway': self.create_payment_gateway('manual'),
+                    'credit_account': self.party1.account_receivable.id,
                 }])
 
                 Sale.process([sale])
@@ -1615,6 +1631,7 @@ class TestGiftCard(TestBase):
                     amount=Decimal('70'),
                     currency=self.company.currency.id,
                     gateway=gateway.id,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -1635,6 +1652,7 @@ class TestGiftCard(TestBase):
                     amount=Decimal('70'),
                     currency=self.company.currency.id,
                     gateway=gateway.id,
+                    credit_account=self.party1.account_receivable.id,
                 )
                 payment_transaction.save()
 
@@ -1789,6 +1807,8 @@ class TestGiftCard(TestBase):
             payment_wizard.payment_info.party = sale.party.id
             payment_wizard.payment_info.sale = sale.id
             payment_wizard.payment_info.reference = 'ref1'
+            payment_wizard.payment_info.credit_account = \
+                sale.party.account_receivable.id
 
             payment_wizard.payment_info.gift_card = active_gift_card.id
             payment_wizard.payment_info.amount = 50
@@ -1867,15 +1887,18 @@ class TestGiftCard(TestBase):
                         'amount': Decimal('20'),
                         'gateway': gift_card_gateway,
                         'gift_card': active_gift_card.id,
+                        'credit_account': self.party1.account_receivable.id,
                     }, {
                         'sale': sale.id,
                         'amount': Decimal('30'),
                         'gateway': cash_gateway,
+                        'credit_account': self.party1.account_receivable.id,
                     }, {
                         'sale': sale.id,
                         'amount': Decimal('50'),
                         'payment_profile': payment_profile.id,
                         'gateway': dummy_gateway,
+                        'credit_account': self.party1.account_receivable.id,
                     }])
 
             self.assertTrue(
@@ -1967,6 +1990,7 @@ class TestGiftCard(TestBase):
                     'sale': sale.id,
                     'amount': Decimal('1000'),
                     'gateway': self.create_payment_gateway('manual'),
+                    'credit_account': self.party1.account_receivable.id,
                 }])
 
                 Sale.process([sale])
@@ -2026,6 +2050,7 @@ class TestGiftCard(TestBase):
                     'sale': sale.id,
                     'amount': Decimal('1000'),
                     'gateway': self.create_payment_gateway('manual'),
+                    'credit_account': self.party1.account_receivable.id,
                 }])
 
                 Sale.process([sale])
